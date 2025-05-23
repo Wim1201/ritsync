@@ -19,3 +19,4 @@
 - `frontend/`: HTML- en stijlbestanden
 - `data/`: testbestanden en output
 - `docs/`: documentatie en referentie
+
