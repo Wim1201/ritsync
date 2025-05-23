@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0f2b2d;
+            color: #f2f2f2;
+            padding: 2em;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+        }
+        .header img {
+            height: 50px;
+            margin-right: 1em;
+        }
+        h1 {
+            font-size: 1.6em;
+            margin: 0;
+        }
+        .info {
+            margin-top: 2em;
+            font-size: 1.1em;
+        }
+        table {
+            width: 100%;
+            margin-top: 2em;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 0.6em;
+            border-bottom: 1px solid #ddd;
+            color: #f2f2f2;
+        }
+        th {
+            background-color: #143b3e;
+            text-align: left;
+        }
+        .disclaimer {
+            font-size: 0.8em;
+            color: #cccccc;
+            margin-top: 3em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="https://raw.githubusercontent.com/Wim1201/ritsync/main/frontend/static/img/logo_ritsync.png" alt="RitSync logo">
+        <h1>RitSync – Kilometeradministratie Rapport</h1>
+    </div>
+
+    <div class="info">
+        <p><strong>Periode:</strong> {{ data.periode }}</p>
+        <p><strong>Totaal kilometers:</strong> {{ data.totaal_km }} km</p>
+        <p><strong>Verbruik:</strong> {{ data.verbruik_liter }} liter</p>
+        <p><strong>Vergoeding:</strong> € {{ data.vergoeding }}</p>
+    </div>
+
+    <table>
+        <tr>
+            <th>Datum</th>
+            <th>Van</th>
+            <th>Naar</th>
+            <th>Afstand (km)</th>
+        </tr>
+        {% for rit in data.ritten %}
+        <tr>
+            <td>{{ rit.datum }}</td>
+            <td>{{ rit.van }}</td>
+            <td>{{ rit.naar }}</td>
+            <td>{{ rit.afstand }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <p class="disclaimer">De berekeningen zijn indicatief, er kunnen geen rechten aan worden ontleend.</p>
+</body>
+</html>
