@@ -1,0 +1,23 @@
+# Git Spiekbrief voor Ritmeester
+
+## Nieuwe bestanden toevoegen
+git add .
+
+## Wijzigingen committen
+git commit -m "Duidelijke commitboodschap"
+
+## Push naar GitHub
+git push
+
+## Branch aanmaken
+git checkout -b feature/nieuwe-functionaliteit
+
+## Branch samenvoegen met main
+git checkout main
+git merge feature/nieuwe-functionaliteit
+
+## Status bekijken
+git status
+
+## Verschillen bekijken
+git diff
