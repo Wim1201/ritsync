@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Instellingen – Ritmeester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 640px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #006699;
+            text-align: center;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 15px;
+            display: block;
+            color: #333;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .submit-button {
+            margin-top: 30px;
+            background-color: #006699;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 100%;
+            cursor: pointer;
+        }
+        .submit-button:hover {
+            background-color: #004d66;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Voorkeursinstellingen</h1>
+        <form action="/opslaan_instellingen" method="post">
+            <label for="vertrekadres">📍 Vertrekadres</label>
+            <input type="text" id="vertrekadres" name="vertrekadres" placeholder="Bijv. Dr. Kuyperstraat 5, Dongen" required>
+
+            <label for="ritten_type">🚗 Type ritten</label>
+            <select id="ritten_type" name="ritten_type">
+                <option value="retour">Altijd heen-en-terug</option>
+                <option value="enkel">Alleen heen (van afspraak naar afspraak)</option>
+                <option value="gemengd">Gemengd (met thuispauzes)</option>
+            </select>
+
+            <label for="vergoeding">💶 Kilometervergoeding (€ per km)</label>
+            <input type="number" step="0.01" id="vergoeding" name="vergoeding" value="0.23" required>
+
+            <label for="pauzegrens">⏱️ Extra rit bij pauze van:</label>
+            <select id="pauzegrens" name="pauzegrens">
+                <option value="2">2 uur</option>
+                <option value="3">3 uur</option>
+                <option value="4" selected>4 uur</option>
+            </select>
+
+            <label for="uploadtype">📷 Agenda-upload als:</label>
+            <select id="uploadtype" name="uploadtype">
+                <option value="foto">Foto (jpg, png)</option>
+                <option value="tekst">Tekstbestand (txt)</option>
+                <option value="pdf">PDF-document</option>
+            </select>
+
+            <button type="submit" class="submit-button">Instellingen opslaan</button>
+        </form>
+    </div>
+</body>
+</html>

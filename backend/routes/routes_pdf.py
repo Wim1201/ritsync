@@ -1,27 +1,30 @@
 # backend/routes/routes_pdf.py
-from flask import Blueprint, request, send_file, jsonify
-from backend.services.pdf_service import genereer_pdf
+from flask import Blueprint, request, send_file, render_template
+from fpdf import FPDF
 import os
-import datetime
+import tempfile
 
 pdf_bp = Blueprint('pdf_bp', __name__)
 
-@pdf_bp.route("/download_pdf", methods=["POST"])
+@pdf_bp.route('/download_pdf', methods=['POST'])
 def download_pdf():
-    try:
-        data = request.json
+    resultaten = request.form.get('resultaten', '')
+    totaal_km = request.form.get('totaal_km', '0')
 
-        if not data:
-            return jsonify({"error": "Geen data ontvangen"}), 400
+    resultaten_lijst = resultaten.split(';') if resultaten else []
 
-        filename = f"ritsync_rapport_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        output_path = os.path.join("data/output", filename)
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt="RitSync - Rittenoverzicht", ln=1, align="C")
+    pdf.ln(10)
 
-        genereer_pdf(data, output_path)
+    for regel in resultaten_lijst:
+        pdf.multi_cell(0, 10, txt=regel)
 
-        return send_file(output_path, as_attachment=True)
+    pdf.ln(5)
+    pdf.cell(200, 10, txt=f"Totaal kilometers (retour): {totaal_km} km", ln=1)
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+        pdf.output(tmp_file.name)
+        return send_file(tmp_file.name, as_attachment=True, download_name="ritsync_resultaat.pdf")

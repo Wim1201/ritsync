@@ -1,5 +1,6 @@
 # backend/services/rit_service.py
 import re
+from backend.services.google_service import bereken_afstanden_google
 
 def detecteer_adressen(tekst):
     """
@@ -15,31 +16,27 @@ def detecteer_adressen(tekst):
 
 def bereken_kilometers(adressen, startpunt="Dr. Kuyperstraat 5, Dongen"):
     """
-    Simuleert afstanden tussen het startpunt en adressen (of tussen adressen onderling).
-    Voor nu gebruiken we vaste voorbeeldafstanden.
+    Bereken retourafstanden tussen startpunt en elk adres via Google Maps API.
     """
-    afstand_per_adres = {
-        "Rijen": 11,
-        "Tilburg": 20,
-        "Goirle": 25,
-        "Breda": 28,
-        "Haarlem": 130,
-        "Oud-Heusden": 38,
-        "Waalwijk": 30
-    }
-
     totaal_km = 0
-    resultaten = []
+    ritten = []
 
-    vorige = startpunt
+    print(f"Startpunt: {startpunt}")
     for adres in adressen:
-        afstand = next((afstand_per_adres[plaats] for plaats in afstand_per_adres if plaats.lower() in adres.lower()), 5)
-        resultaten.append((vorige, adres, afstand))
-        totaal_km += afstand
-        vorige = adres
+        print(f"Verwerk adres: {adres}")
+        try:
+            afstand = bereken_afstand_google(startpunt, adres)
+            print(f"Afstand: {afstand:.2f} km")
+        except Exception as e:
+            print(f"Fout bij {adres}: {e}")
+            afstand = 0
 
-    # Terug naar Dongen
-    resultaten.append((vorige, startpunt, 15))
-    totaal_km += 15
+        ritten.append({
+            "datum": "n.t.b.",
+            "van": startpunt,
+            "naar": adres,
+            "afstand": afstand
+        })
+        totaal_km += afstand * 2  # retourrit
 
-    return resultaten, totaal_km
+    return ritten, totaal_km

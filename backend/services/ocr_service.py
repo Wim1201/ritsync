@@ -1,37 +1,19 @@
 # backend/services/ocr_service.py
-from PIL import Image
+r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 import pytesseract
-import re
+from PIL import Image
+import os
 
-
-def ocr_naar_json(pad_naar_afbeelding):
+def extract_text_from_image(image_path):
     """
-    Leest een afbeelding en probeert adresregels te extraheren.
-    Output: dict in basisstructuur voor PDF.
+    Voert OCR uit op de opgegeven afbeelding en retourneert de gedetecteerde tekst.
     """
+    if not os.path.exists(image_path):
+        raise FileNotFoundError(f"Bestand niet gevonden: {image_path}")
     try:
-        tekst = pytesseract.image_to_string(Image.open(pad_naar_afbeelding))
+        tekst = pytesseract.image_to_string(Image.open(image_path), lang='nld')
+        return tekst
     except Exception as e:
-        return {"fout": f"OCR mislukt: {str(e)}"}
+        print(f"Fout bij OCR: {e}")
+        return ""
 
-    regels = tekst.splitlines()
-    ritten = []
-    totaal_km = 0
-
-    for regel in regels:
-        if re.search(r'\d{4}\s?[A-Z]{2}', regel):  # Postcodeherkenning
-            ritten.append({
-                "datum": "n.t.b.",
-                "van": "Dongen",
-                "naar": regel.strip(),
-                "afstand": 15  # voorlopig vaste afstand
-            })
-            totaal_km += 30  # retour
-
-    return {
-        "periode": "voorbeeldweek",
-        "totaal_km": totaal_km,
-        "verbruik_liter": round(totaal_km / 10, 1),
-        "vergoeding": round(totaal_km * 0.23, 2),
-        "ritten": ritten
-    }
