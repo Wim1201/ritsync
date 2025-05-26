@@ -1,6 +1,6 @@
 # backend/services/rit_service.py
 import re
-from backend.services.google_service import bereken_afstanden_google
+from backend.services.google_service import get_distance_km
 
 def detecteer_adressen(tekst):
     """

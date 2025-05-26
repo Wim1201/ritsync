@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultaten - RitSync</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 2rem; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #004080; }
+        .resultaatblok { margin-bottom: 2rem; }
+        .resultaatblok h3 { color: #333; }
+        pre { background: #f0f0f0; padding: 1rem; overflow-x: auto; }
+        .download-links a { display: inline-block; margin-right: 1rem; color: #004080; text-decoration: none; font-weight: bold; }
+        .download-links a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>OCR-verwerking afgerond</h1>
+
+    {% for item in resultaten %}
+    <div class="resultaatblok">
+        <h3>Bestand: {{ item.bestand }}</h3>
+        <p><strong>Totale kilometers:</strong> {{ item.km_totaal }} km<br>
+           <strong>Woon-werk kilometers:</strong> {{ item.km_woonwerk }} km</p>
+        <h4>Herkenning:</h4>
+        <pre>{{ item.inhoud }}</pre>
+    </div>
+    {% endfor %}
+
+    <div class="download-links">
+        <h3>Download resultaten:</h3>
+        <a href="/ocr-download/{{ excel_bestand }}">Download Excel</a>
+        <a href="/ocr-download/{{ pdf_bestand }}">Download PDF</a>
+    </div>
+</div>
+</body>
+</html>
