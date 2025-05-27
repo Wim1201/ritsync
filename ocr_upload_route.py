@@ -1,22 +1,24 @@
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-
 from flask import Flask, render_template, request, flash, send_from_directory
+import os
 from backend.services.ocr_service import ocr_afbeelding, process_txt_file
 from backend.services.export_service import exporteer_excel, exporteer_pdf
 
 app = Flask(__name__, static_folder="frontend/static", template_folder="frontend/templates")
-app.secret_key = "geheime_sleutel_voor_flash_berichten"
+app.secret_key = "geheime_sleutel"
+
 UPLOAD_FOLDER = "backend/uploads"
 EXPORT_FOLDER = "data/output"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(EXPORT_FOLDER, exist_ok=True)
 
-TOEGESTANE_EXTENSIES = {"jpg", "jpeg", "png", "pdf"}
+TOEGESTANE_EXTENSIES = {"png", "jpg", "jpeg", "pdf"}
 
 def extensie_toegestaan(bestandsnaam):
     return '.' in bestandsnaam and bestandsnaam.rsplit('.', 1)[1].lower() in TOEGESTANE_EXTENSIES
+
+@app.route("/")
+def home():
+    return render_template("index.html")
 
 @app.route("/ocr-uploadpagina", methods=["GET"])
 def ocr_uploadpagina():
@@ -29,7 +31,7 @@ def ocr_upload():
         return render_template("ocr_upload_form.html")
 
     bestanden = request.files.getlist("files")
-    analyse = []
+    analyse_resultaten = []
 
     for bestand in bestanden:
         if bestand.filename == "":
@@ -43,24 +45,28 @@ def ocr_upload():
 
         try:
             tekst = ocr_afbeelding(bestandspad)
-            tijdelijk_txtpad = bestandspad + ".txt"
-            with open(tijdelijk_txtpad, "w", encoding="utf-8") as f:
+            txt_path = bestandspad + ".txt"
+            with open(txt_path, "w", encoding="utf-8") as f:
                 f.write(tekst)
-            analyse.append(process_txt_file(tijdelijk_txtpad))
+            analyse = process_txt_file(txt_path)
+            analyse_resultaten.append(analyse)
         except Exception as e:
             flash(f"Fout bij OCR-verwerking: {bestand.filename} — {e}")
 
-    if not analyse:
+    if not analyse_resultaten:
         flash("Geen bruikbare bestanden verwerkt of geen tekst herkend.")
         return render_template("ocr_upload_form.html")
 
-    excel_pad = exporteer_excel(analyse)
-    pdf_pad = exporteer_pdf(analyse)
+    # Exporteer het eerste resultaat als test
+    excel_pad = exporteer_excel(analyse_resultaten[0])
+    pdf_pad = exporteer_pdf(analyse_resultaten[0])
 
-    excel_bestand = os.path.basename(excel_pad)
-    pdf_bestand = os.path.basename(pdf_pad)
-
-    return render_template("resultaat.html", resultaten=analyse, excel_bestand=excel_bestand, pdf_bestand=pdf_bestand)
+    return render_template(
+        "resultaat.html",
+        resultaten=analyse_resultaten,
+        excel_bestand=os.path.basename(excel_pad),
+        pdf_bestand=os.path.basename(pdf_pad)
+    )
 
 @app.route("/ocr-download/<bestand>")
 def ocr_download(bestand):

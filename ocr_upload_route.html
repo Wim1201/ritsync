@@ -1,4 +1,7 @@
-<!DOCTYPE html>
+<!DOCTYPE html
+@app.route("/")
+def home():
+    return render_template("index.html")
 <html lang="nl">
 <head>
     <meta charset="UTF-8">

@@ -1,83 +1,68 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>RitSync Rittenoverzicht</title>
+    <title>RitSync – PDF Rapport</title>
     <style>
-        body {
+        body.pdf-page {
+            background-color: #ffffff;
+            color: #000000;
             font-family: Arial, sans-serif;
-            color: #1a1a1a;
-            padding: 40px;
+            padding: 2rem;
         }
-        header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 2px solid #ccc;
-            margin-bottom: 20px;
+
+        h1, h2, h3 {
+            color: #003366;
         }
-        header img {
-            height: 60px;
-        }
-        h1 {
-            font-size: 24px;
-            color: #002b45;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-            text-align: left;
-        }
-        .totaal {
+
+        .logo {
+            font-size: 1.8rem;
             font-weight: bold;
-            margin-top: 20px;
-            font-size: 18px;
+            color: #003366;
+            margin-bottom: 1rem;
         }
+
+        .blok {
+            margin-bottom: 2rem;
+        }
+
+        ul {
+            padding-left: 1.2rem;
+        }
+
+        ul li {
+            margin-bottom: 0.3rem;
+        }
+
         footer {
-            margin-top: 40px;
-            font-size: 12px;
-            color: #777;
+            font-size: 0.8rem;
+            color: #555;
+            border-top: 1px solid #ccc;
+            padding-top: 1rem;
+            margin-top: 2rem;
+            text-align: center;
         }
     </style>
 </head>
-<body>
-    <header>
-        <img src="https://raw.githubusercontent.com/Wim1201/ritsync/main/frontend/static/img/logo_ritsync.png" alt="RitSync logo">
-        <h1>RitSync – Rittenrapport</h1>
-    </header>
+<body class="pdf-page">
+    <div class="logo">RitSync Rapport</div>
 
-    <p><strong>Datum:</strong> {{ datum }}</p>
-    <p><strong>Vertrekadres:</strong> {{ vertrek }}</p>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Van</th>
-                <th>Naar</th>
-                <th>Afstand (enkele rit)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for rit in ritten %}
-            <tr>
-                <td>{{ rit.van }}</td>
-                <td>{{ rit.naar }}</td>
-                <td>{{ "%.2f"|format(rit.afstand) }} km</td>
-            </tr>
+    {% for analyse in resultaten %}
+    <div class="blok">
+        <h2>Bestand: {{ analyse.bestand }}</h2>
+        <p><strong>Totaal aantal kilometers:</strong> {{ analyse.km_totaal }} km</p>
+        <p><strong>Woon-werk kilometers:</strong> {{ analyse.km_woonwerk }} km</p>
+        <h3>Herkenning per rit:</h3>
+        <ul>
+            {% for rit in analyse.resultaten %}
+            <li>{{ rit.adres }} → {{ rit.afstand_km }} km ({{ rit.categorie }})</li>
             {% endfor %}
-        </tbody>
-    </table>
-
-    <p class="totaal">Totaal aantal kilometers (retour): {{ "%.2f"|format(totaal) }} km</p>
+        </ul>
+    </div>
+    {% endfor %}
 
     <footer>
-        Dit rittenoverzicht is automatisch gegenereerd door RitSync.
-        De gegevens zijn indicatief en er kunnen geen rechten aan worden ontleend.
+        &copy; 2025 RitSync – Dit rapport is gegenereerd op basis van geüploade agenda's. Geen rechten kunnen worden ontleend aan deze testversie.
     </footer>
 </body>
 </html>

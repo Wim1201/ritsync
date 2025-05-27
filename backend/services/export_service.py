@@ -1,65 +1,61 @@
 import os
-import openpyxl
 from fpdf import FPDF
+from openpyxl import Workbook
 from datetime import datetime
 
-EXPORTMAP = "data/output"
-os.makedirs(EXPORTMAP, exist_ok=True)
+EXPORT_FOLDER = "data/output"
+os.makedirs(EXPORT_FOLDER, exist_ok=True)
 
-def exporteer_excel(analyse):
-    wb = openpyxl.Workbook()
+
+def exporteer_excel(data):
+    wb = Workbook()
     ws = wb.active
-    ws.title = "RitSync"
-    ws.append(["Bestandsnaam", "Adres", "Categorie", "Afstand (km)"])
+    ws.title = "Rittenoverzicht"
 
-    totaal_km = 0.0
-    totaal_woonwerk = 0.0
-
-    for item in analyse:
-        bestandsnaam = os.path.basename(item["bestand"])
-        for rit in item["resultaten"]:
-            ws.append([bestandsnaam, rit["adres"], rit["categorie"], rit["afstand_km"]])
-        totaal_km += item.get("km_totaal", 0.0)
-        totaal_woonwerk += item.get("km_woonwerk", 0.0)
+    ws.append(["Bestand", "Van", "Adres", "Afstand (km)", "Categorie"])
+    for item in data["resultaten"]:
+        ws.append([
+            os.path.basename(data["bestand"]),
+            item.get("van", "?"),
+            item["adres"],
+            item["afstand_km"],
+            item["categorie"]
+        ])
 
     ws.append([])
-    ws.append(["Totaal kilometers:", round(totaal_km, 2)])
-    ws.append(["Waarvan woon-werk:", round(totaal_woonwerk, 2)])
+    ws.append(["Totaal kilometers", data["km_totaal"]])
+    ws.append(["Woon-werk kilometers", data["km_woonwerk"]])
 
-    pad = os.path.join(EXPORTMAP, f"ocr_export_{timestamp()}.xlsx")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    bestandsnaam = f"ocr_export_{timestamp}.xlsx"
+    pad = os.path.join(EXPORT_FOLDER, bestandsnaam)
     wb.save(pad)
-    return pad
+    return bestandsnaam
 
-def exporteer_pdf(analyse):
+
+def exporteer_pdf(data):
     pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt="OCR Resultaten RitSync", ln=1, align="C")
+
+    pdf.cell(200, 10, txt="RitSync - Rittenrapport", ln=True, align="C")
     pdf.ln(10)
+    pdf.set_font("Arial", size=10)
+    pdf.cell(200, 10, txt=f"Bestand: {os.path.basename(data['bestand'])}", ln=True)
+    pdf.ln(5)
 
-    totaal_km = 0.0
-    totaal_woonwerk = 0.0
+    for item in data["resultaten"]:
+        regel = f"Van: {item.get('van', '?')} -> {item['adres']} | {item['afstand_km']} km | {item['categorie']}"
+        pdf.multi_cell(0, 8, regel)
 
-    for item in analyse:
-        bestandsnaam = os.path.basename(item["bestand"])
-        pdf.set_font("Arial", "B", size=11)
-        pdf.cell(200, 10, txt=f"Bestand: {bestandsnaam}", ln=1)
-        pdf.set_font("Arial", size=10)
-        for rit in item["resultaten"]:
-            lijn = f"{rit['categorie'].capitalize()} | {rit['adres']} | {rit['afstand_km']} km"
-            pdf.cell(200, 8, txt=lijn[:100], ln=1)
-        pdf.ln(5)
-        totaal_km += item.get("km_totaal", 0.0)
-        totaal_woonwerk += item.get("km_woonwerk", 0.0)
+    pdf.ln(5)
+    pdf.set_font("Arial", style="B", size=10)
+    pdf.cell(200, 10, txt=f"Totaal: {data['km_totaal']} km", ln=True)
+    pdf.cell(200, 10, txt=f"Woon-werk: {data['km_woonwerk']} km", ln=True)
 
-    pdf.set_font("Arial", "B", size=11)
-    pdf.ln(10)
-    pdf.cell(200, 10, txt=f"Totaal kilometers: {round(totaal_km, 2)} km", ln=1)
-    pdf.cell(200, 10, txt=f"Waarvan woon-werk: {round(totaal_woonwerk, 2)} km", ln=1)
-
-    pad = os.path.join(EXPORTMAP, f"ocr_export_{timestamp()}.pdf")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    bestandsnaam = f"ocr_export_{timestamp}.pdf"
+    pad = os.path.join(EXPORT_FOLDER, bestandsnaam)
     pdf.output(pad)
-    return pad
-
-def timestamp():
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
+    return bestandsnaam

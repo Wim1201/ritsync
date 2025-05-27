@@ -1,50 +1,27 @@
-<!-- frontend/templates/index.html -->
 <!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>RitSync – Upload</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #0f2b2d;
-            color: #f2f2f2;
-            padding: 2em;
-            text-align: center;
-        }
-        header img {
-            height: 50px;
-            float: left;
-        }
-        h1 {
-            margin-top: 0;
-        }
-        form {
-            margin-top: 2em;
-        }
-        input[type="file"] {
-            padding: 0.5em;
-        }
-        input[type="submit"] {
-            padding: 0.5em 1em;
-            background-color: #143b3e;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-    </style>
+    <title>RitSync – Eenvoudige ritregistratie</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <header>
-        <img src="https://raw.githubusercontent.com/Wim1201/ritsync/main/frontend/static/img/logo_ritsync.png" alt="RitSync logo">
-        <h1>RitSync – Upload je agenda</h1>
+    <header class="hero">
+        <img src="/static/img/logo_wit.png" alt="RitSync logo" class="hero-logo">
+        <h1 class="subtitle">Eenvoudige ritregistratie</h1>
+        <h2 class="main-heading">Beheer uw ritten moeiteloos met RitSync</h2>
+        <p class="intro-text">
+            RitSync biedt een gebruiksvriendelijke oplossing voor uw kilometerregistratie. 
+            Upload uw agenda met tags, categoriseer uw ritten, en download overzichtelijke rapporten in PDF of Excel-formaat. 
+            Ideaal voor zowel zakelijk als privégebruik.
+        </p>
+        <a href="/ocr-uploadpagina" class="cta-button">Start ritregistratie</a>
     </header>
-    <p>Deel je zakelijke ritgegevens en download een overzichtelijke PDF met berekende ritten.</p>
 
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="file">
-        <br><br>
-        <input type="submit" value="Uploaden & Analyseren">
-    </form>
+    <footer class="footer">
+        <a href="#">Privacybeleid</a>
+        <a href="#">Ondersteuning</a>
+        <a href="#">Contact</a>
+    </footer>
 </body>
 </html>

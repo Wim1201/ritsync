@@ -1,40 +1,42 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>RitSync OCR Upload</title>
+    <title>RitSync – Upload je ritten</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <style>
-        body { font-family: Arial, sans-serif; margin: 2rem; background-color: #f9f9f9; }
-        .container { max-width: 700px; margin: auto; padding: 2rem; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-radius: 8px; }
-        h1 { text-align: center; color: #004080; }
-        label { font-weight: bold; }
-        input[type=file] { margin-top: 1rem; margin-bottom: 1rem; width: 100%; }
-        .btn { background-color: #004080; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; }
-        .btn:hover { background-color: #0066cc; }
-        .flash { color: red; margin-bottom: 1rem; }
-    </style>
 </head>
 <body>
-<div class="container">
-    <h1>Upload OCR-bestanden</h1>
+    <header>
+        <div class="logo">RitSync</div>
+        <h1>Upload je ritgegevens</h1>
+    </header>
 
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <div class="flash">
-          {% for message in messages %}
-            <p>{{ message }}</p>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
+    <main class="intro">
+        <p>Upload je gescande agenda’s of documenten met ritgegevens. RitSync leest de adressen automatisch uit en berekent de zakelijke kilometers voor je.</p>
 
-    <form method="POST" action="/ocr-upload" enctype="multipart/form-data">
-        <label for="files">Selecteer één of meerdere bestanden (jpg, png, pdf):</label>
-        <input type="file" name="files" multiple required>
-        <br>
-        <button type="submit" class="btn">Upload en verwerk</button>
-    </form>
-</div>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul style="color: #ff6b6b;">
+              {% for message in messages %}
+                <li>{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+
+        <form method="post" action="/ocr-upload" enctype="multipart/form-data">
+            <input type="file" name="files" multiple required><br><br>
+            <button type="submit" class="cta-button">Verwerk bestanden</button>
+        </form>
+
+        <p style="margin-top: 2rem; font-size: 0.9rem; color: #ccc;">
+            Let op: bestanden moeten van het type .jpg, .jpeg, .png of .pdf zijn.
+        </p>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 RitSync. Geen rechten kunnen worden ontleend aan deze testversie.</p>
+        <a href="/">Terug naar startpagina</a>
+    </footer>
 </body>
 </html>
