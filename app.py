@@ -1,40 +1,31 @@
-# app.py (plaats in hoofdmap "ritsync")
-from flask import Flask, render_template, request
-from backend.routes.routes_pdf import pdf_bp
-from backend.services.ocr_service import extract_text_from_image
-from backend.services.rit_service import detecteer_adressen
+import sys
 import os
+from flask import Flask, render_template
+from dotenv import load_dotenv  # ➕ toegevoegd
 
-app = Flask(__name__, template_folder="frontend/templates")
+# 🔃 .env laden
+load_dotenv()
+print("✅ Gekozen wkhtmltopdf-pad:", os.getenv("WKHTMLTOPDF_PATH"))
+
+# Voeg backend-map toe aan het pad voor import
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'backend')))
+
+from backend.routes.routes_pdf import pdf_bp
+from backend.routes.ocr_upload_route import ocr_bp
+
+app = Flask(__name__, template_folder="frontend/templates", static_folder="frontend/static")
+app.secret_key = 'sleutel1201'
+
+# Blueprints registreren
 app.register_blueprint(pdf_bp)
-
-# Correct gescheiden
-UPLOAD_FOLDER = os.path.join("backend", "uploads")
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.register_blueprint(ocr_bp)
 
 @app.route("/")
 def index():
-    return render_template("index.html")
-
-@app.route("/upload", methods=["POST"])
-def upload():
-    file = request.files.get("file")
-    if not file:
-        return "Geen bestand ontvangen", 400
-
-    filepath = os.path.join(UPLOAD_FOLDER, file.filename)
-    file.save(filepath)
-
-    # OCR uitvoeren
-    tekst = extract_text_from_image(filepath)
-    adressen = detecteer_adressen(tekst)
-
-    return render_template(
-        "result.html",
-        adressen=adressen,
-        vertrek="Dr. Kuyperstraat 5, Dongen"
-    )
+    return render_template("upload_form.html")
 
 if __name__ == "__main__":
-    print("=== Start RitSync app ===")
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
+
+
+

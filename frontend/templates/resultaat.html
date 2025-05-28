@@ -2,6 +2,8 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
+<<<<<<< HEAD
+HEAD
     <title>Resultaten - RitSync</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
@@ -35,5 +37,56 @@
         <a href="/ocr-download/{{ pdf_bestand }}">Download PDF</a>
     </div>
 </div>
+
+    <title>RitSync – Resultaten</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="resultaat">
+    <header>
+        <div class="logo">RitSync</div>
+        <h1>Ritregistratie en analyse</h1>
+    </header>
+
+    <main class="intro">
+        {% for analyse in resultaten %}
+            <section style="text-align: left; margin-bottom: 2rem;">
+                <h2>Bestand: {{ analyse.bestand }}</h2>
+                <p><strong>Volledige inhoud:</strong><br>{{ analyse.inhoud | safe }}</p>
+                <p><strong>Totaal aantal kilometers:</strong> {{ analyse.km_totaal }} km</p>
+                <p><strong>Woon-werk kilometers:</strong> {{ analyse.km_woonwerk }} km</p>
+                <h3>Herkenning per rit:</h3>
+                <ul>
+                    {% for rit in analyse.resultaten %}
+                        <li>
+                            {{ rit.adres }} → {{ rit.afstand_km }} km ({{ rit.categorie }})
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endfor %}
+
+        <div style="margin-top: 2rem;">
+            <a class="cta-button" href="/ocr-download/{{ excel_bestand }}">Download Excel</a>
+            <a class="cta-button" href="/ocr-download/{{ pdf_bestand }}">Download PDF</a>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 RitSync. Controleer altijd je gegevens. Geen rechten kunnen worden ontleend aan deze testversie.</p>
+        <a href="/">Terug naar startpagina</a>
+    </footer>
+f611f73 (Herstelde werkende versie van RitSync na rollback)
+=======
+    <title>RitSync - Resultaat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Verwerkt resultaat</h1>
+        <p>Dit is de tekst die herkend is uit de geüploade agenda-afbeelding:</p>
+        <pre>{{ text }}</pre>
+        <a href="/">Terug naar start</a>
+    </div>
+>>>>>>> 9fae167 (✅ Werkende versie met upload + PDF download)
 </body>
 </html>

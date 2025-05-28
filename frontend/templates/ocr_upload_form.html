@@ -2,6 +2,7 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
+<<<<<<< HEAD
     <title>RitSync OCR Upload</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
@@ -36,5 +37,49 @@
         <button type="submit" class="btn">Upload en verwerk</button>
     </form>
 </div>
+=======
+    <title>RitSync – Upload je ritten</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="invul">
+    <header>
+        <div class="logo">RitSync</div>
+        <h1>Ritgegevens invoeren en uploaden</h1>
+    </header>
+
+    <main class="intro">
+        <form action="/ocr-upload" method="POST" enctype="multipart/form-data">
+            <label for="thuisadres">Thuisadres:</label><br>
+            <input type="text" id="thuisadres" name="thuisadres" required><br><br>
+
+            <label for="kantooradres">Kantooradres:</label><br>
+            <input type="text" id="kantooradres" name="kantooradres" required><br><br>
+
+            <label for="verbruikstype">Autogegevens / verbruik (schatting of kenteken):</label><br>
+            <input type="text" id="verbruikstype" name="verbruikstype"><br><br>
+
+            <label for="intervaltijd">Intervaltijd tussen afspraken (minuten):</label><br>
+            <input type="number" id="intervaltijd" name="intervaltijd" min="0" step="1"><br><br>
+
+            <label for="typegebruik">Gebruik:</label><br>
+            <select id="typegebruik" name="typegebruik">
+                <option value="zakelijk">Zakelijk</option>
+                <option value="privé">Privé</option>
+                <option value="woonwerk">Woon-werk</option>
+            </select><br><br>
+
+            <label for="files">Upload je agenda (JPG, PNG of PDF):</label><br>
+            <input type="file" name="files" multiple required><br><br>
+
+            <button type="submit" class="cta-button">Verwerk mijn ritten</button>
+            <button type="button" class="cta-button" onclick="alert('Let op: dit is een testversie van RitSync. Controleer altijd de resultaten en raadpleeg een adviseur bij fiscale vragen.')">Info</button>
+        </form>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 RitSync – Voor fiscale interpretatie zonder gedoe.</p>
+        <a href="/">Terug naar startpagina</a>
+    </footer>
+>>>>>>> f611f73 (Herstelde werkende versie van RitSync na rollback)
 </body>
 </html>

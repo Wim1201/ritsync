@@ -2,30 +2,17 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>RitSync OCR Upload</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 2em; }
-        form { padding: 1em; border: 1px solid #ccc; border-radius: 6px; width: 300px; }
-        .fout { color: red; margin-bottom: 1em; }
-    </style>
+    <title>RitSync - Upload agenda</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>Upload agenda-afbeeldingen</h1>
-
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="fout">
-                {% for message in messages %}
-                    <p>{{ message }}</p>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-
-    <form method="POST" action="/upload" enctype="multipart/form-data">
-        <input type="file" name="files" multiple accept=".jpg,.jpeg,.png,.pdf"><br><br>
-        <button type="submit">Verwerk OCR</button>
-    </form>
+    <div class="container">
+        <h1>OCR-agenda beeldverwerking</h1>
+        <p>Selecteer een JPG- of PDF-bestand met een agenda om te uploaden.</p>
+        <form action="/ocr-upload" method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".jpg,.jpeg,.png,.pdf" required>
+            <button type="submit">Verwerk agenda</button>
+        </form>
+    </div>
 </body>
 </html>
-

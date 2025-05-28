@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 import os
 import re
 import openpyxl
@@ -5,6 +8,20 @@ from fpdf import FPDF
 from datetime import datetime
 from backend.services.google_service import get_distance_km
 
+def bereken_kilometers(adressen):
+    """
+    Bereken de totale afstand tussen een reeks adressen met Google Maps.
+    De adressen zijn geordend en vormen een keten.
+    """
+    totale_afstand = 0.0
+
+    for i in range(len(adressen) - 1):
+        vertrek = adressen[i]
+        aankomst = adressen[i + 1]
+        afstand = get_distance_km(vertrek, aankomst)
+        totale_afstand += afstand
+
+    return round(totale_afstand, 2)
 
 ADDRESS_REGEX = re.compile(r"(\d{4}\s?[A-Z]{2})\s+([\w\s']+\d+)\b", re.IGNORECASE)
 START_ADDRESS = "Dr. Kuyperstraat, Dongen"

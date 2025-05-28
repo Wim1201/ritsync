@@ -1,30 +1,50 @@
-# backend/routes/routes_pdf.py
-from flask import Blueprint, request, send_file, render_template
-from fpdf import FPDF
+from flask import Blueprint, request, render_template, make_response, current_app
+import pdfkit
 import os
-import tempfile
+import uuid
+import traceback
 
+# Blueprint aanmaken
 pdf_bp = Blueprint('pdf_bp', __name__)
 
 @pdf_bp.route('/download_pdf', methods=['POST'])
 def download_pdf():
-    resultaten = request.form.get('resultaten', '')
-    totaal_km = request.form.get('totaal_km', '0')
+    try:
+        locatie = request.form.get('locatie', 'Onbekend')
+        totaal_km = request.form.get('totaal_km', 'n.v.t.')
+        co2 = request.form.get('co2', 'n.v.t.')
+        declarabel = request.form.get('declarabel', 'n.v.t.')
 
-    resultaten_lijst = resultaten.split(';') if resultaten else []
+        print("📄 PDF wordt gegenereerd voor:")
+        print(f"  Locatie: {locatie}, KM: {totaal_km}, CO2: {co2}, Declarabel: {declarabel}")
 
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt="RitSync - Rittenoverzicht", ln=1, align="C")
-    pdf.ln(10)
+        # HTML renderen uit template
+        rendered = render_template(
+            'pdf_template.html',
+            locatie=locatie,
+            totaal_km=totaal_km,
+            co2=co2,
+            declarabel=declarabel
+        )
 
-    for regel in resultaten_lijst:
-        pdf.multi_cell(0, 10, txt=regel)
+        # Tijdelijke HTML genereren
+        bestandsnaam = f"ritsync_{uuid.uuid4().hex[:8]}.pdf"
+        temp_html = os.path.join(current_app.root_path, f'temp_{bestandsnaam}.html')
+        with open(temp_html, 'w', encoding='utf-8') as f:
+            f.write(rendered)
 
-    pdf.ln(5)
-    pdf.cell(200, 10, txt=f"Totaal kilometers (retour): {totaal_km} km", ln=1)
+        # PDF genereren met wkhtmltopdf
+        config = pdfkit.configuration(wkhtmltopdf=os.getenv('WKHTMLTOPDF_PATH', 'wkhtmltopdf'))
+        pdf_output = pdfkit.from_file(temp_html, False, configuration=config)
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-        pdf.output(tmp_file.name)
-        return send_file(tmp_file.name, as_attachment=True, download_name="ritsync_resultaat.pdf")
+        os.remove(temp_html)
+
+        response = make_response(pdf_output)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename={bestandsnaam}'
+        return response
+
+    except Exception as e:
+        print("🚨 Fout bij PDF-generatie:")
+        traceback.print_exc()
+        return f"Fout bij het genereren van de PDF: {str(e)}", 500
