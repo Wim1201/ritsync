@@ -1,0 +1,86 @@
+<!-- templates/homepage.html -->
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Welkom bij RitSync</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body {
+            background-color: #f4f4f4;
+            font-family: 'Roboto', sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #ffffff;
+            padding: 2em 0 1em;
+            text-align: center;
+        }
+
+        header img {
+            height: 70px;
+        }
+
+        .content {
+            max-width: 800px;
+            margin: 2em auto;
+            background-color: #ffffff;
+            padding: 2em;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        .content h1 {
+            color: #0056b3;
+            font-size: 2em;
+        }
+
+        .content p {
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .cta-button {
+            display: inline-block;
+            margin-top: 2em;
+            padding: 0.8em 1.5em;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .cta-button:hover {
+            background-color: #0056b3;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.85em;
+            margin: 3em 0 1em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='logo_ritsynq.PNG') }}" alt="RitSync logo">
+    </header>
+
+    <div class="content">
+        <h1>Welkom bij RitSync</h1>
+        <p>Met RitSync zet je eenvoudig een zakelijke agenda om naar een rittenoverzicht. Upload een foto of PDF van je agenda, en wij analyseren automatisch de ritten, berekenen de afstanden via Google Maps, en maken een rapportage in PDF en Excel-formaat voor je kilometeradministratie.</p>
+
+        <p>Je hoeft niets handmatig in te vullen. Alles wordt automatisch verwerkt met OCR, ketenlogica en kilometervergoeding. Geschikt voor ondernemers, werknemers en administratiekantoren.</p>
+
+        <a href="{{ url_for('ocr_uploadpagina') }}" class="cta-button">Upload je agenda</a>
+    </div>
+
+    <footer>
+        De berekeningen zijn indicatief en er kunnen geen rechten aan worden ontleend.
+    </footer>
+</body>
+</html>

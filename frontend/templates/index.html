@@ -2,25 +2,79 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>RitSync - Upload</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>RitSync – Upload je agenda</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        header {
+            background-color: #ffffff;
+            text-align: center;
+            padding: 1.5em 0;
+        }
+
+        header img {
+            height: 60px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .upload-container {
+            max-width: 600px;
+            margin: 2em auto;
+            padding: 2em;
+            background-color: #fff;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        input[type="file"] {
+            padding: 0.6em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 1em;
+            width: 100%;
+        }
+
+        button {
+            padding: 0.6em 1.2em;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        footer {
+            margin-top: 4em;
+            font-size: 0.85em;
+            color: #999;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Upload een agenda-afbeelding</h1>
-        <form method="POST" action="/upload" enctype="multipart/form-data">
-            <input type="file" name="file" accept=".jpg,.jpeg,.png,.pdf">
-            <button type="submit">Uploaden</button>
+    <header>
+        <img src="{{ url_for('static', filename='logo_ritsynq.PNG') }}" alt="RitSync Logo">
+    </header>
+
+    <div class="upload-container">
+        <h1>Upload je agenda-afbeelding</h1>
+        <form action="/index" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".jpg,.jpeg,.png,.pdf" required>
+            <br>
+            <button type="submit">Verwerken</button>
         </form>
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <ul>
-                    {% for message in messages %}
-                        <li>{{ message }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
     </div>
+
+    <footer>
+        RitSync – OCR kilometeradministratie – &copy; 2025
+    </footer>
 </body>
 </html>

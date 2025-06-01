@@ -4,6 +4,7 @@ body {
     margin: 0;
     padding: 0;
     text-align: center;
+    color: #333;
 }
 
 .container {
@@ -28,6 +29,8 @@ form {
 
 input[type="file"] {
     padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }
 
 button {

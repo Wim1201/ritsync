@@ -3,50 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <title>RitSync Resultaten</title>
+    <link rel="stylesheet" href="/static/style.css">
     <style>
         body {
+            background-color: #ffffff;
             font-family: Arial, sans-serif;
-            padding: 2em;
-            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
         }
+
+        header {
+            text-align: center;
+            background-color: #ffffff;
+            padding: 1.5em 0;
+        }
+
+        header img {
+            height: 60px;
+        }
+
         h1 {
             text-align: center;
+            margin-top: 0.5em;
+            color: #222;
         }
+
         .keten {
-            border: 1px solid #ccc;
-            padding: 1em;
-            margin-bottom: 1em;
-            background-color: #fff;
+            background-color: #ffffff;
+            border-left: 6px solid #007bff;
+            padding: 1em 1.5em;
+            margin: 1em auto;
+            max-width: 700px;
+            border-radius: 6px;
+            text-align: left;
         }
+
+        .keten h2 {
+            margin-top: 0;
+            color: #007bff;
+        }
+
+        ul {
+            padding-left: 1.5em;
+        }
+
         .download-buttons {
-            margin-top: 2em;
             text-align: center;
+            margin-top: 2em;
         }
+
         .download-buttons a {
             display: inline-block;
             margin: 0.5em;
-            padding: 0.5em 1em;
+            padding: 0.6em 1.2em;
             background-color: #007bff;
             color: white;
             text-decoration: none;
             border-radius: 5px;
         }
+
         .download-buttons a:hover {
             background-color: #0056b3;
         }
+
         .waarschuwingen {
-            color: darkorange;
-            margin-top: 1em;
+            max-width: 700px;
+            margin: 2em auto;
+            background-color: #fff3cd;
+            border-left: 6px solid #ffa502;
+            padding: 1em 1.5em;
+            border-radius: 6px;
+            text-align: left;
+        }
+
+        .waarschuwingen h3 {
+            margin-top: 0;
+        }
+
+        footer {
+            margin-top: 4em;
+            text-align: center;
+            font-size: 0.85em;
+            color: #777;
+            padding-bottom: 2em;
         }
     </style>
 </head>
 <body>
+    <header>
+        <img src="{{ url_for('static', filename='ritsync_logo_dark.PNG') }}" alt="RitSync Logo">
+    </header>
+
     <h1>Overzicht van ritten</h1>
 
     {% if ketens %}
-        {% for index, keten in enumerate(ketens) %}
+        {% for keten in ketens %}
             <div class="keten">
-                <h2>Keten {{ index + 1 }}</h2>
+                <h2>Keten {{ loop.index }}</h2>
                 <ul>
                     {% for adres in keten['stops'] %}
                         <li>{{ adres }}</li>
@@ -55,9 +108,9 @@
                 <p><strong>Totaal aantal kilometers:</strong> {{ keten['totaal_km'] }} km</p>
             </div>
         {% endfor %}
-        <p><strong>Totale zakelijke kilometers:</strong> {{ totaal_zakelijke_km }} km</p>
+        <p style="text-align:center;"><strong>Totale zakelijke kilometers:</strong> {{ totaal_zakelijke_km }} km</p>
     {% else %}
-        <p>Geen ritten gevonden.</p>
+        <p style="text-align:center;">Geen ritten gevonden.</p>
     {% endif %}
 
     {% if waarschuwingen %}
@@ -72,8 +125,13 @@
     {% endif %}
 
     <div class="download-buttons">
-        <a href="{{ url_for('pdf_routes.download_pdf') }}">📄 Download PDF</a>
-        <a href="{{ url_for('ocr_routes.download_excel') }}">📊 Download Excel</a>
+        <a href="{{ url_for('download_pdf') }}">📄 Download PDF</a>
+        <a href="{{ url_for('download_excel') }}">📊 Download Excel</a>
     </div>
+
+    <footer>
+        RitSync – info@ritsync.nl – &copy; 2025<br>
+        De berekeningen zijn indicatief en er kunnen geen rechten aan worden ontleend.
+    </footer>
 </body>
 </html>
