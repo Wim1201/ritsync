@@ -1,31 +1,17 @@
-import sys
-import os
-from flask import Flask, render_template
-from dotenv import load_dotenv  # ➕ toegevoegd
+from flask import Flask
+from backend.routes.ocr_routes import ocr_bp
+from backend.routes.routes_pdf import pdf_route  # indien van toepassing, anders weglaten
 
-# 🔃 .env laden
-load_dotenv()
-print("✅ Gekozen wkhtmltopdf-pad:", os.getenv("WKHTMLTOPDF_PATH"))
+app = Flask(__name__, static_folder="frontend/static", template_folder="frontend/templates")
+app.secret_key = "geheime_sleutel"
 
-# Voeg backend-map toe aan het pad voor import
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'backend')))
-
-from backend.routes.routes_pdf import pdf_bp
-from backend.routes.ocr_upload_route import ocr_bp
-
-app = Flask(__name__, template_folder="frontend/templates", static_folder="frontend/static")
-app.secret_key = 'sleutel1201'
-
-# Blueprints registreren
-app.register_blueprint(pdf_bp)
+# Registreren van Blueprints
 app.register_blueprint(ocr_bp)
+app.register_blueprint(pdf_route)  # weglaten als niet van toepassing
 
 @app.route("/")
 def index():
-    return render_template("upload_form.html")
+    return "RitSync draait – gebruik /ocr-uploadpagina voor OCR-upload."
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
-
-
-
+    app.run(debug=True)

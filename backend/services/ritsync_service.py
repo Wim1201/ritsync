@@ -1,52 +1,55 @@
 import datetime
 
-def bereken_kilometers(adressen, afstandsfunctie, thuisadres, kantooradres, interval_minuten=120):
+def bereken_kilometers(adressen, afstandsfunctie, thuisadres, kantooradres):
     ketens = []
     huidige_keten = []
+    waarschuwingen = []
+    totaal_zakelijke_km = 0.0
+
     vorige_adres = thuisadres
-    vorige_tijd = None
 
     for afspraak in adressen:
         if not isinstance(afspraak, dict):
             continue
 
-        huidig_adres = afspraak.get("adres")
-        huidig_tijdstip = afspraak.get("tijdstip")
+        adres = afspraak.get("adres")
+        rit_type = afspraak.get("type", "onbekend").lower()
 
-        if not huidig_adres or not huidig_tijdstip or not isinstance(huidig_tijdstip, datetime.datetime):
+        if not adres:
             continue
 
-        if vorige_tijd is None:
-            huidige_keten = [thuisadres, huidig_adres]
+        if rit_type == "privé":
+            waarschuwingen.append(f"Privéafspraak genegeerd: {adres}")
+            continue
+
+        if rit_type != "zakelijk":
+            waarschuwingen.append(f"Onbekend type afspraak bij {adres}, controleer invoer")
+            continue
+
+        if not huidige_keten:
+            huidige_keten = [thuisadres, adres]
         else:
-            tijdverschil = (huidig_tijdstip - vorige_tijd).total_seconds() / 60
-            if tijdverschil > interval_minuten:
-                afstand_kantoor = afstandsfunctie(huidig_adres, kantooradres)
-                afstand_thuis = afstandsfunctie(huidig_adres, thuisadres)
-                eindpunt = kantooradres if afstand_kantoor < afstand_thuis else thuisadres
-                huidige_keten.append(eindpunt)
-                ketens.append(huidige_keten)
-                startpunt = kantooradres if eindpunt == thuisadres else thuisadres
-                huidige_keten = [startpunt, huidig_adres]
-            else:
-                huidige_keten.append(huidig_adres)
+            huidige_keten.append(adres)
 
-        vorige_adres = huidig_adres
-        vorige_tijd = huidig_tijdstip
+        vorige_adres = adres
 
+    # Sluit keten altijd af met huis of kantoor, afhankelijk van afstand
     if huidige_keten:
-        afstand_kantoor = afstandsfunctie(huidige_keten[-1], kantooradres)
-        afstand_thuis = afstandsfunctie(huidige_keten[-1], thuisadres)
+        laatste_adres = huidige_keten[-1]
+        afstand_kantoor = afstandsfunctie(laatste_adres, kantooradres)
+        afstand_thuis = afstandsfunctie(laatste_adres, thuisadres)
         eindpunt = kantooradres if afstand_kantoor < afstand_thuis else thuisadres
         huidige_keten.append(eindpunt)
         ketens.append(huidige_keten)
 
-    totalen = []
+    # Bereken kilometers per keten
+    keten_afstanden = []
     for keten in ketens:
         totaal_km = 0.0
         for i in range(len(keten) - 1):
             afstand = afstandsfunctie(keten[i], keten[i + 1])
             totaal_km += afstand
-        totalen.append(round(totaal_km, 2))
+        keten_afstanden.append(round(totaal_km, 2))
+        totaal_zakelijke_km += totaal_km
 
-    return ketens, totalen
+    return ketens, keten_afstanden, round(totaal_zakelijke_km, 2), waarschuwingen

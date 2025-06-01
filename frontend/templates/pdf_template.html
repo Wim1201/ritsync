@@ -2,13 +2,46 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>PDF Export</title>
+    <title>RitSync – Ritregistratie</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h1 { color: #333; }
+        .keten { margin-bottom: 25px; }
+        .totaal { font-weight: bold; margin-top: 30px; }
+        .waarschuwing { color: #aa0000; }
+    </style>
 </head>
 <body>
-    <h1>Overzicht van de rit</h1>
-    <p><strong>Locatie:</strong> {{ locatie }}</p>
-    <p><strong>Totaal kilometers:</strong> {{ totaal_km }}</p>
-    <p><strong>CO₂-uitstoot:</strong> {{ co2 }}</p>
-    <p><strong>Declarabel:</strong> {{ declarabel }}</p>
+    <h1>Ritregistratie Overzicht</h1>
+
+    <p><strong>Startadres (thuis):</strong> {{ thuisadres }}</p>
+    <p><strong>Eindpunt (kantoor):</strong> {{ kantooradres }}</p>
+
+    {% for i in range(ketens|length) %}
+        <div class="keten">
+            <h2>Keten {{ i + 1 }}</h2>
+            <ol>
+                {% for punt in ketens[i] %}
+                    <li>{{ punt }}</li>
+                {% endfor %}
+            </ol>
+            <p><strong>Afstand:</strong> {{ keten_afstanden[i] }} km</p>
+        </div>
+    {% endfor %}
+
+    <div class="totaal">
+        Totale zakelijke kilometers: {{ totaal_km }} km
+    </div>
+
+    {% if waarschuwingen %}
+        <div class="waarschuwingen">
+            <h3>⚠️ Waarschuwingen:</h3>
+            <ul>
+                {% for melding in waarschuwingen %}
+                    <li class="waarschuwing">{{ melding }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
 </body>
 </html>

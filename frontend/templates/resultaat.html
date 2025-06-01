@@ -2,91 +2,78 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-<<<<<<< HEAD
-HEAD
-    <title>Resultaten - RitSync</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>RitSync Resultaten</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 2rem; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #004080; }
-        .resultaatblok { margin-bottom: 2rem; }
-        .resultaatblok h3 { color: #333; }
-        pre { background: #f0f0f0; padding: 1rem; overflow-x: auto; }
-        .download-links a { display: inline-block; margin-right: 1rem; color: #004080; text-decoration: none; font-weight: bold; }
-        .download-links a:hover { text-decoration: underline; }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 2em;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            text-align: center;
+        }
+        .keten {
+            border: 1px solid #ccc;
+            padding: 1em;
+            margin-bottom: 1em;
+            background-color: #fff;
+        }
+        .download-buttons {
+            margin-top: 2em;
+            text-align: center;
+        }
+        .download-buttons a {
+            display: inline-block;
+            margin: 0.5em;
+            padding: 0.5em 1em;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .download-buttons a:hover {
+            background-color: #0056b3;
+        }
+        .waarschuwingen {
+            color: darkorange;
+            margin-top: 1em;
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>OCR-verwerking afgerond</h1>
+    <h1>Overzicht van ritten</h1>
 
-    {% for item in resultaten %}
-    <div class="resultaatblok">
-        <h3>Bestand: {{ item.bestand }}</h3>
-        <p><strong>Totale kilometers:</strong> {{ item.km_totaal }} km<br>
-           <strong>Woon-werk kilometers:</strong> {{ item.km_woonwerk }} km</p>
-        <h4>Herkenning:</h4>
-        <pre>{{ item.inhoud }}</pre>
-    </div>
-    {% endfor %}
-
-    <div class="download-links">
-        <h3>Download resultaten:</h3>
-        <a href="/ocr-download/{{ excel_bestand }}">Download Excel</a>
-        <a href="/ocr-download/{{ pdf_bestand }}">Download PDF</a>
-    </div>
-</div>
-
-    <title>RitSync – Resultaten</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body class="resultaat">
-    <header>
-        <div class="logo">RitSync</div>
-        <h1>Ritregistratie en analyse</h1>
-    </header>
-
-    <main class="intro">
-        {% for analyse in resultaten %}
-            <section style="text-align: left; margin-bottom: 2rem;">
-                <h2>Bestand: {{ analyse.bestand }}</h2>
-                <p><strong>Volledige inhoud:</strong><br>{{ analyse.inhoud | safe }}</p>
-                <p><strong>Totaal aantal kilometers:</strong> {{ analyse.km_totaal }} km</p>
-                <p><strong>Woon-werk kilometers:</strong> {{ analyse.km_woonwerk }} km</p>
-                <h3>Herkenning per rit:</h3>
+    {% if ketens %}
+        {% for index, keten in enumerate(ketens) %}
+            <div class="keten">
+                <h2>Keten {{ index + 1 }}</h2>
                 <ul>
-                    {% for rit in analyse.resultaten %}
-                        <li>
-                            {{ rit.adres }} → {{ rit.afstand_km }} km ({{ rit.categorie }})
-                        </li>
+                    {% for adres in keten['stops'] %}
+                        <li>{{ adres }}</li>
                     {% endfor %}
                 </ul>
-            </section>
+                <p><strong>Totaal aantal kilometers:</strong> {{ keten['totaal_km'] }} km</p>
+            </div>
         {% endfor %}
+        <p><strong>Totale zakelijke kilometers:</strong> {{ totaal_zakelijke_km }} km</p>
+    {% else %}
+        <p>Geen ritten gevonden.</p>
+    {% endif %}
 
-        <div style="margin-top: 2rem;">
-            <a class="cta-button" href="/ocr-download/{{ excel_bestand }}">Download Excel</a>
-            <a class="cta-button" href="/ocr-download/{{ pdf_bestand }}">Download PDF</a>
+    {% if waarschuwingen %}
+        <div class="waarschuwingen">
+            <h3>⚠️ Waarschuwingen:</h3>
+            <ul>
+                {% for w in waarschuwingen %}
+                    <li>{{ w }}</li>
+                {% endfor %}
+            </ul>
         </div>
-    </main>
+    {% endif %}
 
-    <footer>
-        <p>&copy; 2025 RitSync. Controleer altijd je gegevens. Geen rechten kunnen worden ontleend aan deze testversie.</p>
-        <a href="/">Terug naar startpagina</a>
-    </footer>
-f611f73 (Herstelde werkende versie van RitSync na rollback)
-=======
-    <title>RitSync - Resultaat</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Verwerkt resultaat</h1>
-        <p>Dit is de tekst die herkend is uit de geüploade agenda-afbeelding:</p>
-        <pre>{{ text }}</pre>
-        <a href="/">Terug naar start</a>
+    <div class="download-buttons">
+        <a href="{{ url_for('pdf_routes.download_pdf') }}">📄 Download PDF</a>
+        <a href="{{ url_for('ocr_routes.download_excel') }}">📊 Download Excel</a>
     </div>
->>>>>>> 9fae167 (✅ Werkende versie met upload + PDF download)
 </body>
 </html>

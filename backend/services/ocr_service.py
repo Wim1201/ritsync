@@ -1,22 +1,29 @@
-import re
-import datetime
+import pytesseract
+from PIL import Image
+import os
 
-def parse_ocr_output(ocr_text):
-    afspraken = []
-    regels = ocr_text.splitlines()
+def verwerk_ocr(bestandspad):
+    try:
+        # Controle op bestandstype
+        if bestandspad.lower().endswith('.pdf'):
+            from pdf2image import convert_from_path
+            pagina_afbeeldingen = convert_from_path(bestandspad)
+            tekst_resultaten = [pytesseract.image_to_string(pagina) for pagina in pagina_afbeeldingen]
+            tekst = "\n".join(tekst_resultaten)
+        else:
+            afbeelding = Image.open(bestandspad)
+            tekst = pytesseract.image_to_string(afbeelding)
 
-    for regel in regels:
-        regel = regel.strip().replace("–", "-").replace("’", "'").replace("”", '"')
-        if not regel:
-            continue
+        # Dummy-parser voor demonstratie (splits per regel en geef dummy-afstanden)
+        regels = tekst.strip().split('\n')
+        afspraken = []
+        for regel in regels:
+            regel = regel.strip()
+            if regel:
+                afspraken.append({'adres': regel, 'type': 'zakelijk', 'afstand': 0.0})
 
-        match = re.match(r"(\d{1,2}-\d{1,2}-\d{2,4})\s+(\d{1,2}:\d{2})\s+(.*)", regel)
-        if match:
-            datum_str, tijd_str, adres = match.groups()
-            try:
-                datumtijd = datetime.datetime.strptime(f"{datum_str} {tijd_str}", "%d-%m-%Y %H:%M")
-                afspraken.append({"tijdstip": datumtijd, "adres": adres.strip()})
-            except ValueError:
-                continue
+        return [afspraken] if afspraken else []
 
-    return afspraken
+    except Exception as e:
+        print(f"❌ Fout bij OCR-verwerking: {e}")
+        return []
