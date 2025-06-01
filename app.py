@@ -1,54 +1,31 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file
+from flask import Flask, render_template
 import os
-import webbrowser
-import threading
+from backend.routes.ocr_routes import ocr_routes
 
-# Padinstellingen voor templates en static
-base_dir = os.path.dirname(__file__)
-template_dir = os.path.join(base_dir, 'frontend', 'templates')
-static_dir = os.path.join(base_dir, 'frontend', 'static')
+app = Flask(
+    __name__,
+    template_folder="frontend/templates",  # <--- voeg dit toe
+    static_folder="frontend/static"        # optioneel, als je daar CSS/JS hebt
+)
+app.secret_key ="sleutel1201"
 
-app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
+# Register OCR blueprint
+app.register_blueprint(ocr_routes)
 
-# === Homepage ===
-@app.route("/")
-def homepage():
-    return render_template("homepage.html")
-
-# === Uploadpagina (index.html) ===
-@app.route("/index", methods=["GET", "POST"])
-def ocr_uploadpagina():
-    if request.method == "POST":
-        # Tijdelijk testgedrag
-        return redirect(url_for("resultaat"))
+# Route voor homepage (index)
+@app.route("/", methods=["GET"])
+def index():
     return render_template("index.html")
 
-# === Resultatenpagina (met dummydata) ===
-@app.route("/resultaat")
+# Route om OCR-uploadformulier te tonen
+@app.route("/upload_ocr", methods=["GET"])
+def show_ocr_form():
+    return render_template("ocr_upload_form.html")
+
+# (optioneel) Route voor resultaatpagina
+@app.route("/resultaat", methods=["GET"])
 def resultaat():
-    ketens = [
-        {"stops": ["Startadres", "Klant A", "Klant B"], "totaal_km": 42},
-        {"stops": ["Startadres", "Klant C", "Klant D"], "totaal_km": 28}
-    ]
-    totaal_zakelijke_km = 70
-    waarschuwingen = ["Controleer uw agenda op hiaten."]
-    return render_template("resultaat.html", ketens=ketens, totaal_zakelijke_km=totaal_zakelijke_km, waarschuwingen=waarschuwingen)
+    return render_template("resultaat.html")
 
-# === PDF-download (testbestand) ===
-@app.route("/download/pdf")
-def download_pdf():
-    return send_file("data/output/ritsync_20250525_092758.pdf", as_attachment=True)
-
-# === Excel-download (testbestand) ===
-@app.route("/download/excel")
-def download_excel():
-    return send_file("data/output/ritsync_20250525_092758.xlsx", as_attachment=True)
-
-# === Automatisch browser openen ===
-def open_browser():
-    webbrowser.open_new("http://127.0.0.1:5000/")
-
-# === Applicatie starten ===
 if __name__ == "__main__":
-    threading.Timer(1.25, open_browser).start()
     app.run(debug=True)
