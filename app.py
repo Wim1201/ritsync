@@ -1,54 +1,90 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file
+from flask import Flask, render_template, request, redirect, url_for, send_file, session
+from weasyprint import HTML
 import os
-import webbrowser
-import threading
+import pandas as pd
+from modules.csv_parser import parse_csv
+from modules.google_km import bereken_afstand_google
+from datetime import datetime
+from dataclasses import dataclass
+import uuid
 
-# Padinstellingen voor templates en static
-base_dir = os.path.dirname(__file__)
-template_dir = os.path.join(base_dir, 'frontend', 'templates')
-static_dir = os.path.join(base_dir, 'frontend', 'static')
+app = Flask(__name__)
+app.secret_key = 'secure_routing_key_123'  # Zet dit in .env voor productie
 
-app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 
-# === Homepage ===
-@app.route("/")
-def homepage():
-    return render_template("homepage.html")
+@dataclass
+class Rit:
+    datum: str
+    starttijd: str
+    eindtijd: str
+    locatie: str
+    afstand_km: float
 
-# === Uploadpagina (index.html) ===
-@app.route("/index", methods=["GET", "POST"])
-def ocr_uploadpagina():
-    if request.method == "POST":
-        # Tijdelijk testgedrag
-        return redirect(url_for("resultaat"))
-    return render_template("index.html")
 
-# === Resultatenpagina (met dummydata) ===
-@app.route("/resultaat")
+@app.route('/')
+def home():
+    return render_template('import/home.html')
+
+
+@app.route('/index', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        bestand = request.files['bestand']
+        thuis = request.form['thuisadres']
+        kantoor = request.form['kantooradres']
+        bestandsnaam = bestand.filename
+        uploadpad = os.path.join('uploads', bestandsnaam)
+        bestand.save(uploadpad)
+
+        if bestandsnaam.endswith('.csv'):
+            ritten = parse_csv(uploadpad, thuis, kantoor)
+            session['ritten'] = [rit.__dict__ for rit in ritten]
+            return redirect(url_for('resultaat'))
+
+    return render_template('import/index.html')
+
+
+@app.route('/resultaat')
 def resultaat():
-    ketens = [
-        {"stops": ["Startadres", "Klant A", "Klant B"], "totaal_km": 42},
-        {"stops": ["Startadres", "Klant C", "Klant D"], "totaal_km": 28}
-    ]
-    totaal_zakelijke_km = 70
-    waarschuwingen = ["Controleer uw agenda op hiaten."]
-    return render_template("resultaat.html", ketens=ketens, totaal_zakelijke_km=totaal_zakelijke_km, waarschuwingen=waarschuwingen)
+    ritten_data = session.get('ritten')
+    if not ritten_data:
+        return redirect(url_for('index'))
 
-# === PDF-download (testbestand) ===
-@app.route("/download/pdf")
+    ritten = [Rit(**r) for r in ritten_data]
+    totaal_km = sum(rit.afstand_km for rit in ritten)
+    woon_werk_km = sum(rit.afstand_km for rit in ritten if "kantoor" in rit.locatie.lower())
+
+    return render_template("import/resultaat.html", ritten=ritten, totaal=totaal_km, woonwerk=woon_werk_km)
+
+
+@app.route('/download/pdf')
 def download_pdf():
-    return send_file("data/output/ritsync_20250525_092758.pdf", as_attachment=True)
+    ritten_data = session.get('ritten', [])
+    if not ritten_data:
+        return redirect(url_for('index'))
 
-# === Excel-download (testbestand) ===
-@app.route("/download/excel")
+    html = render_template("import/pdf_template.html", ritten=ritten_data)
+    pdf = HTML(string=html).write_pdf()
+    pdfpad = f"exports/ritsync_{uuid.uuid4().hex[:8]}.pdf"
+
+    with open(pdfpad, 'wb') as f:
+        f.write(pdf)
+
+    return send_file(pdfpad, as_attachment=True)
+
+
+@app.route('/download/excel')
 def download_excel():
-    return send_file("data/output/ritsync_20250525_092758.xlsx", as_attachment=True)
+    ritten_data = session.get('ritten', [])
+    if not ritten_data:
+        return redirect(url_for('index'))
 
-# === Automatisch browser openen ===
-def open_browser():
-    webbrowser.open_new("http://127.0.0.1:5000/")
+    df = pd.DataFrame(ritten_data)
+    excelpad = f"exports/ritsync_{uuid.uuid4().hex[:8]}.xlsx"
+    df.to_excel(excelpad, index=False)
 
-# === Applicatie starten ===
-if __name__ == "__main__":
-    threading.Timer(1.25, open_browser).start()
+    return send_file(excelpad, as_attachment=True)
+
+
+if __name__ == '__main__':
     app.run(debug=True)

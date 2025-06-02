@@ -1,0 +1,82 @@
+@media (max-width: 600px) {
+    table, thead, tbody, th, td, tr {
+        display: block;
+        width: 100%;
+    }
+
+    th {
+        display: none;
+    }
+
+    td {
+        position: relative;
+        padding-left: 50%;
+        border: none;
+        border-bottom: 1px solid #eee;
+    }
+
+    td::before {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 45%;
+        padding-left: 0.5rem;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    td:nth-of-type(1)::before { content: "Datum"; }
+    td:nth-of-type(2)::before { content: "Van"; }
+    td:nth-of-type(3)::before { content: "Naar"; }
+    td:nth-of-type(4)::before { content: "Afstand"; }
+}
+
+@media (max-width: 600px) {
+    table, thead, tbody, th, td, tr {
+        display: block;
+        width: 100%;
+    }
+
+    th {
+        display: none;
+    }
+
+    td {
+        position: relative;
+        padding-left: 50%;
+        border: none;
+        border-bottom: 1px solid #eee;
+    }
+
+    td::before {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 45%;
+        padding-left: 0.5rem;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    td:nth-of-type(1)::before { content: "Datum"; }
+    td:nth-of-type(2)::before { content: "Van"; }
+    td:nth-of-type(3)::before { content: "Naar"; }
+    td:nth-of-type(4)::before { content: "Afstand"; }
+}
+
+.result-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.result-table th, .result-table td {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+}
+
+.result-table th {
+    background-color: #007bff;
+    color: white;
+}
+

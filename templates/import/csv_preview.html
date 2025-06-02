@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>CSV Preview</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>🕵 CSV Preview</h1>
+    <table border="1">
+        <tr>
+            <th>Datum</th>
+            <th>Starttijd</th>
+            <th>Eindtijd</th>
+            <th>Locatie</th>
+            <th>Projectnummer</th>
+        </tr>
+        {% for rit in ritten %}
+        <tr>
+            <td>{{ rit.datum }}</td>
+            <td>{{ rit.starttijd }}</td>
+            <td>{{ rit.eindtijd }}</td>
+            <td>{{ rit.locatie }}</td>
+            <td>{{ rit.projectnummer or '-' }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
