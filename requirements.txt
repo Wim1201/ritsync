@@ -3,3 +3,4 @@ pdfkit
 pytesseract
 Pillow
 python-dotenv
+PyMuPDF>=1.23.7
