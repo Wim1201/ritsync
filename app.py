@@ -1,123 +1,82 @@
-HEAD
-from flask import Flask, render_template, request, redirect, url_for, send_file, session
-from weasyprint import HTML
 import os
-import pandas as pd
-from modules.csv_parser import parse_csv
-from modules.google_km import bereken_afstand_google
-from datetime import datetime
-from dataclasses import dataclass
-import uuid
+import threading
+import webbrowser
+from flask import Flask, request, redirect, render_template, send_file
+from werkzeug.utils import secure_filename
 
+# Modules
+from modules.ics_parser import parse_ics
+from modules.ics_exporter import exporteer_ritten_van_ics_data
+from modules.ocr_reader import lees_tekst_van_bestand, extract_project_info
+from modules.match_ocr_to_ics import match_ocr_aan_ritten
+
+# Flask setup
 app = Flask(__name__)
-app.secret_key = 'secure_routing_key_123'  # Zet dit in .env voor productie
+UPLOAD_FOLDER = 'uploads'
+EXPORT_FILE = 'exports/ritten_met_afstand.csv'
 
-
-@dataclass
-class Rit:
-    datum: str
-    starttijd: str
-    eindtijd: str
-    locatie: str
-    afstand_km: float
-
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs('exports', exist_ok=True)
 
 @app.route('/')
-def home():
-    return render_template('import/home.html')
-
-
-@app.route('/index', methods=['GET', 'POST'])
 def index():
-    if request.method == 'POST':
-        bestand = request.files['bestand']
-        thuis = request.form['thuisadres']
-        kantoor = request.form['kantooradres']
-        bestandsnaam = bestand.filename
-        uploadpad = os.path.join('uploads', bestandsnaam)
-        bestand.save(uploadpad)
+    return render_template('index.html')
 
-        if bestandsnaam.endswith('.csv'):
-            ritten = parse_csv(uploadpad, thuis, kantoor)
-            session['ritten'] = [rit.__dict__ for rit in ritten]
-            return redirect(url_for('resultaat'))
+@app.route('/upload', methods=['POST'])
+@app.route('/upload', methods=['POST'])
+def upload():
+    ics_file = request.files.get('ics_file')
+    ocr_files = request.files.getlist('ocr_files')  # ✅ meerdere OCR-bestanden
 
-    return render_template('import/index.html')
+    ritten = []
 
+    # ICS verwerken als aanwezig
+    if ics_file and ics_file.filename != '':
+        ics_path = os.path.join(UPLOAD_FOLDER, secure_filename(ics_file.filename))
+        ics_file.save(ics_path)
+        ritten = parse_ics(ics_path)
+    else:
+        ritten = []  # Geen ICS = lege rittenlijst (OCR-only mode)
 
-@app.route('/resultaat')
-def resultaat():
-    ritten_data = session.get('ritten')
-    if not ritten_data:
-        return redirect(url_for('index'))
+    # OCR verwerken
+    if ocr_files:
+        for ocr_file in ocr_files:
+            if ocr_file.filename == '':
+                continue
+            ocr_path = os.path.join(UPLOAD_FOLDER, secure_filename(ocr_file.filename))
+            ocr_file.save(ocr_path)
+            tekst = lees_tekst_van_bestand(ocr_path)
+            ocr_data = extract_project_info(tekst)
 
-    ritten = [Rit(**r) for r in ritten_data]
-    totaal_km = sum(rit.afstand_km for rit in ritten)
-    woon_werk_km = sum(rit.afstand_km for rit in ritten if "kantoor" in rit.locatie.lower())
+            # Bij ICS aanwezig: match met ritten
+            if ritten:
+                ritten = match_ocr_aan_ritten(ritten, ocr_data)
+            else:
+                # OCR-only rit bouwen
+                ritten.append({
+                    "datum": "",  # optioneel leeg laten
+                    "tijd": "",
+                    "vertrek": "",
+                    "aankomst": "",
+                    "project": ocr_data.get("project"),
+                    "extra_locatie_ocr": ocr_data.get("locatie")
+                })
 
-    return render_template("import/resultaat.html", ritten=ritten, totaal=totaal_km, woonwerk=woon_werk_km)
+    # CSV exporteren
+    exporteer_ritten_van_ics_data(ritten)
+    return redirect("/download")
 
+@app.route('/download')
+def download():
+    return render_template('download.html')
 
-@app.route('/download/pdf')
-def download_pdf():
-    ritten_data = session.get('ritten', [])
-    if not ritten_data:
-        return redirect(url_for('index'))
+@app.route('/export')
+def export_csv():
+    return send_file(EXPORT_FILE, as_attachment=True)
 
-    html = render_template("import/pdf_template.html", ritten=ritten_data)
-    pdf = HTML(string=html).write_pdf()
-    pdfpad = f"exports/ritsync_{uuid.uuid4().hex[:8]}.pdf"
-
-    with open(pdfpad, 'wb') as f:
-        f.write(pdf)
-
-    return send_file(pdfpad, as_attachment=True)
-
-
-@app.route('/download/excel')
-def download_excel():
-    ritten_data = session.get('ritten', [])
-    if not ritten_data:
-        return redirect(url_for('index'))
-
-    df = pd.DataFrame(ritten_data)
-    excelpad = f"exports/ritsync_{uuid.uuid4().hex[:8]}.xlsx"
-    df.to_excel(excelpad, index=False)
-
-    return send_file(excelpad, as_attachment=True)
-
-
-if __name__ '__main__':
-=======
-from flask import Flask, render_template
-import os
-from backend.routes.ocr_routes import ocr_routes
-
-app = Flask(
-    __name__,
-    template_folder="frontend/templates",  # <--- voeg dit toe
-    static_folder="frontend/static"        # optioneel, als je daar CSS/JS hebt
-)
-app.secret_key ="sleutel1201"
-
-# Register OCR blueprint
-app.register_blueprint(ocr_routes)
-
-# Route voor homepage (index)
-@app.route("/", methods=["GET"])
-def index():
-    return render_template("index.html")
-
-# Route om OCR-uploadformulier te tonen
-@app.route("/upload_ocr", methods=["GET"])
-def show_ocr_form():
-    return render_template("ocr_upload_form.html")
-
-# (optioneel) Route voor resultaatpagina
-@app.route("/resultaat", methods=["GET"])
-def resultaat():
-    return render_template("resultaat.html")
-
-if __name__ "__main__":
-    786e81ce811eea5f14fc6910c32fe7510080b6b4
+# Automatisch openen in browser
+if __name__ == '__main__':
+    def open_browser():
+        webbrowser.open("http://127.0.0.1:5000")
+    threading.Timer(1, open_browser).start()
     app.run(debug=True)
