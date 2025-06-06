@@ -7,7 +7,12 @@ from jinja2 import Environment, FileSystemLoader
 def genereer_pdf(data, output_path):
     # Zet het pad naar de templates-map
     template_dir = os.path.join(os.path.dirname(__file__), '../templates')
-    env = Environment(loader=FileSystemLoader(template_dir))
+    from pathlib import Path
+    from jinja2 import Environment, FileSystemLoader
+
+    templates_dir = Path(__file__).resolve().parent.parent.parent / "templates"
+    env = Environment(loader=FileSystemLoader(str(templates_dir)))
+
     template = env.get_template("pdf_template.html")
 
     # Render de HTML met de opgegeven data

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>Ritregistratie Start</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 80px;
+    }
+    h1 {
+      color: #0077b6;
+    }
+    .button {
+      margin: 20px;
+      padding: 12px 30px;
+      font-size: 16px;
+      background-color: #0077b6;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .button:hover {
+      background-color: #005f8f;
+    }
+  </style>
+</head>
+<body>
+  <h1>Welkom bij RitSync</h1>
+  <p>Registreer en exporteer eenvoudig je zakelijke ritten.</p>
+  <a href="{{ url_for('index') }}"><button class="button">Start ritregistratie</button></a>
+  <a href="#"><button class="button">Info</button></a>
+</body>
+</html>

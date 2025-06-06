@@ -1,83 +1,94 @@
-import os
-import threading
-import webbrowser
-from flask import Flask, request, redirect, render_template, send_file
+from flask import Flask, request, render_template, redirect, url_for, session, send_file
+from pathlib import Path
 from werkzeug.utils import secure_filename
+from backend.services.pdf_service import genereer_pdf
+from backend.services.excel_service import genereer_excel
 
-# Modules
-from modules.ics_parser import parse_ics
-from modules.ics_exporter import exporteer_ritten_van_ics_data
-from modules.ocr_reader import lees_tekst_van_bestand, extract_project_info
-from modules.match_ocr_to_ics import match_ocr_aan_ritten
-
-# Flask setup
 app = Flask(__name__)
-UPLOAD_FOLDER = 'uploads'
-EXPORT_FILE = 'exports/ritten_met_afstand.csv'
+app.secret_key = "geheimetestwaarde"
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs('exports', exist_ok=True)
+UPLOAD_FOLDER = Path("uploads")
+UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 
-@app.route('/')
+@app.route("/")
+def root():
+    return redirect(url_for("home"))
+
+@app.route("/home")
+def home():
+    return render_template("start.html")
+
+@app.route("/index")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/upload', methods=['POST'])
-@app.route('/upload', methods=['POST'])
-def upload():
-    ics_file = request.files.get('ics_file')
-    ocr_files = request.files.getlist('ocr_files')  # ✅ meerdere OCR-bestanden
+@app.route("/verwerk", methods=["POST"])
+def verwerk():
+    thuisadres = request.form.get("thuisadres")
+    kantooradres = request.form.get("kantooradres")
 
-    ritten = []
+    agenda_bestanden = request.files.getlist("agenda_files")
+    ics_bestanden = request.files.getlist("ics_files")
 
-    # ICS verwerken als aanwezig
-    if ics_file and ics_file.filename != '':
-        ics_path = os.path.join(UPLOAD_FOLDER, secure_filename(ics_file.filename))
-        ics_file.save(ics_path)
-        ritten = parse_ics(ics_path)
-    else:
-        ritten = []  # Geen ICS = lege rittenlijst (OCR-only mode)
+    agenda_bestanden = [f for f in agenda_bestanden if f and f.filename]
+    ics_bestanden = [f for f in ics_bestanden if f and f.filename]
 
-    # OCR verwerken
-    if ocr_files:
-        for ocr_file in ocr_files:
-            if ocr_file.filename == '':
-                continue
-            ocr_path = os.path.join(UPLOAD_FOLDER, secure_filename(ocr_file.filename))
-            ocr_file.save(ocr_path)
-            tekst = lees_tekst_van_bestand(ocr_path)
-            ocr_data = extract_project_info(tekst)
+    for bestand in agenda_bestanden + ics_bestanden:
+        bestandsnaam = secure_filename(bestand.filename)
+        bestand.save(UPLOAD_FOLDER / bestandsnaam)
 
-            # Bij ICS aanwezig: match met ritten
-            if ritten:
-                ritten = match_ocr_aan_ritten(ritten, ocr_data)
-            else:
-                # OCR-only rit bouwen
-                ritten.append({
-                    "datum": "",  # optioneel leeg laten
-                    "tijd": "",
-                    "vertrek": "",
-                    "aankomst": "",
-                    "project": ocr_data.get("project"),
-                    "extra_locatie_ocr": ocr_data.get("locatie")
-                })
+    # Simulatie/mockdata voor demo
+    ritgegevens = [
+        {
+            "datum": "2025-06-06",
+            "tijd": "09:00",
+            "vertrek": thuisadres,
+            "bestemming": kantooradres,
+            "kilometers": 27.4,
+            "project": "Ritsync MVP"
+        },
+        {
+            "datum": "2025-06-07",
+            "tijd": "14:30",
+            "vertrek": kantooradres,
+            "bestemming": thuisadres,
+            "kilometers": 27.4,
+            "project": "Ritsync MVP"
+        }
+    ]
 
-    # CSV exporteren
-    exporteer_ritten_van_ics_data(ritten)
-    return redirect("/download")
+    session["ritgegevens"] = ritgegevens
+    session["totaal_km"] = sum(r["kilometers"] for r in ritgegevens)
+    session["woonwerk_km"] = 12.0  # Placeholder
 
-@app.route('/download')
-def download():
-    return render_template('download.html')
+    return redirect(url_for("resultaat"))
 
-@app.route('/export')
-def export_csv():
-    return send_file(EXPORT_FILE, as_attachment=True)
+@app.route("/resultaat")
+def resultaat():
+    ritgegevens = session.get("ritgegevens", [])
+    totaal_km = session.get("totaal_km", 0)
+    woonwerk_km = session.get("woonwerk_km", 0)
+    return render_template("resultaat.html", ritten=ritgegevens, totaal_km=totaal_km, woonwerk_km=woonwerk_km)
 
-# Automatisch openen in browser
-if __name__ == '__main__':
-    def open_browser():
-        webbrowser.open("http://127.0.0.1:5000")
-    threading.Timer(1, open_browser).start()
-    app.run(host="0.0.0.0", port=10000, debug=True)
+@app.route("/export/pdf")
+def download_pdf():
+    data = session.get("ritgegevens", [])
+    if not data:
+        return "<h2>Geen ritgegevens gevonden om te exporteren.</h2>", 400
 
+    temp_pdf_path = Path("data/output/ritregistratie.pdf")
+    genereer_pdf(data, temp_pdf_path)
+    return send_file(temp_pdf_path, as_attachment=True)
+
+@app.route("/export/excel")
+def download_excel():
+    data = session.get("ritgegevens", [])
+    if not data:
+        return "<h2>Geen ritgegevens gevonden om te exporteren.</h2>", 400
+
+    pad = genereer_excel(data)
+    return send_file(pad, as_attachment=True)
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
