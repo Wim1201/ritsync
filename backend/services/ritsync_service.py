@@ -1,55 +1,96 @@
-import datetime
+# backend/services/rit_sync_service.py
 
-def bereken_kilometers(adressen, afstandsfunctie, thuisadres, kantooradres):
-    ketens = []
-    huidige_keten = []
-    waarschuwingen = []
-    totaal_zakelijke_km = 0.0
+import os
+from dotenv import load_dotenv
+from backend.services.google_service import get_route_distance
+from datetime import datetime
+from operator import itemgetter
 
-    vorige_adres = thuisadres
+load_dotenv()
 
-    for afspraak in adressen:
-        if not isinstance(afspraak, dict):
-            continue
+THUISADRES = os.getenv("THUISADRES")
+KANTOORADRES = os.getenv("KANTOORADRES")
 
-        adres = afspraak.get("adres")
-        rit_type = afspraak.get("type", "onbekend").lower()
+def genereer_rittenlijst(agenda_items):
+    """
+    Genereert een lijst ritten op basis van gesorteerde afspraken en vaste woon-werk routes.
+    Verwacht input: lijst dicts met keys: datum (YYYY-MM-DD), starttijd (HH:MM), eindtijd (HH:MM), locatie, omschrijving
+    """
 
-        if not adres:
-            continue
+    ritten = []
+    totaal_km = 0.0
+    totaal_woonwerk = 0.0
 
-        if rit_type == "privé":
-            waarschuwingen.append(f"Privéafspraak genegeerd: {adres}")
-            continue
+    # Groepeer afspraken per dag
+    afspraken_per_dag = {}
+    for item in agenda_items:
+        datum = item["datum"]
+        afspraken_per_dag.setdefault(datum, []).append(item)
 
-        if rit_type != "zakelijk":
-            waarschuwingen.append(f"Onbekend type afspraak bij {adres}, controleer invoer")
-            continue
+    for datum, afspraken in afspraken_per_dag.items():
+        afspraken.sort(key=itemgetter("starttijd"))  # sorteer op tijd
 
-        if not huidige_keten:
-            huidige_keten = [thuisadres, adres]
-        else:
-            huidige_keten.append(adres)
+        dag_ritten = []
+        laatste_adres = THUISADRES
 
-        vorige_adres = adres
+        # 🚗 Thuis -> Kantoor (woon-werk)
+        if afspraken:
+            rit1 = maak_rit(datum, THUISADRES, KANTOORADRES, "Woon-werk: Thuis → Kantoor")
+            dag_ritten.append(rit1)
+            totaal_km += rit1["afstand_km"]
+            totaal_woonwerk += rit1["afstand_km"]
+            laatste_adres = KANTOORADRES
 
-    # Sluit keten altijd af met huis of kantoor, afhankelijk van afstand
-    if huidige_keten:
-        laatste_adres = huidige_keten[-1]
-        afstand_kantoor = afstandsfunctie(laatste_adres, kantooradres)
-        afstand_thuis = afstandsfunctie(laatste_adres, thuisadres)
-        eindpunt = kantooradres if afstand_kantoor < afstand_thuis else thuisadres
-        huidige_keten.append(eindpunt)
-        ketens.append(huidige_keten)
+        # 📍 Kantoor → afspraak → (evt. meer)
+        for afspraak in afspraken:
+            bestemming = afspraak["locatie"]
+            omschrijving = afspraak.get("omschrijving") or afspraak.get("titel") or "Afspraak"
 
-    # Bereken kilometers per keten
-    keten_afstanden = []
-    for keten in ketens:
-        totaal_km = 0.0
-        for i in range(len(keten) - 1):
-            afstand = afstandsfunctie(keten[i], keten[i + 1])
-            totaal_km += afstand
-        keten_afstanden.append(round(totaal_km, 2))
-        totaal_zakelijke_km += totaal_km
+            rit = maak_rit(datum, laatste_adres, bestemming, omschrijving)
+            dag_ritten.append(rit)
+            totaal_km += rit["afstand_km"]
+            laatste_adres = bestemming
 
-    return ketens, keten_afstanden, round(totaal_zakelijke_km, 2), waarschuwingen
+        # 🔁 Laatste afspraak → Kantoor
+        if afspraken:
+            rit2 = maak_rit(datum, laatste_adres, KANTOORADRES, "Terug naar kantoor")
+            dag_ritten.append(rit2)
+            totaal_km += rit2["afstand_km"]
+            laatste_adres = KANTOORADRES
+
+            # Kantoor → Thuis (woon-werk)
+            rit3 = maak_rit(datum, KANTOORADRES, THUISADRES, "Woon-werk: Kantoor → Thuis")
+            dag_ritten.append(rit3)
+            totaal_km += rit3["afstand_km"]
+            totaal_woonwerk += rit3["afstand_km"]
+
+        ritten.extend(dag_ritten)
+
+    return {
+        "ritten": ritten,
+        "totaal_km": round(totaal_km, 1),
+        "woonwerk_km": round(totaal_woonwerk, 1),
+    }
+
+
+def maak_rit(datum, vertrek, bestemming, doel):
+    """Helperfunctie voor aanmaken rit + afstand ophalen via Google"""
+    try:
+        route = get_route_distance(vertrek, bestemming)
+        return {
+            "datum": datum,
+            "vertrek": vertrek,
+            "bestemming": bestemming,
+            "afstand_km": round(route["distance_meters"] / 1000, 1),
+            "reistijd": route["duration_text"],
+            "doel": doel
+        }
+    except Exception as e:
+        return {
+            "datum": datum,
+            "vertrek": vertrek,
+            "bestemming": bestemming,
+            "afstand_km": 0.0,
+            "reistijd": "-",
+            "doel": f"{doel} (FOUT: {str(e)})"
+        }
