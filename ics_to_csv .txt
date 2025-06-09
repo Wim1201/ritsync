@@ -1,2 +1,0 @@
-from modules.ics_to_csv import ics_to_csv
-ics_to_csv("import/calendar.ics")
