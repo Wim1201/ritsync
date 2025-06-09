@@ -1,32 +1,65 @@
+import re
 import pytesseract
 from PIL import Image
-import pdf2image
-import os
-import json
+from backend.services.google_service import get_distance_km
 
-OUTPUT_FILE = 'ritsync/data/output/ocr_text.json'
+START_ADDRESS = "Dr. Kuyperstraat, Dongen"
 
-def extract_text_from_file(filepath):
-    file_ext = os.path.splitext(filepath)[1].lower()
+# Verwijs naar de juiste locatie van Tesseract op Windows
+pytesseract.pytesseract.tesseract_cmd = r"C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
 
-    if file_ext in ['.png', '.jpg', '.jpeg']:
-        image = Image.open(filepath)
-        text = pytesseract.image_to_string(image)
+def ocr_afbeelding(pad):
+    try:
+        image = Image.open(pad)
+        tekst = pytesseract.image_to_string(image, lang="eng")
+        return tekst
+    except Exception as e:
+        raise RuntimeError(f"OCR mislukt: {e}")
 
-    elif file_ext == '.pdf':
-        images = pdf2image.convert_from_path(filepath)
-        text = ''
-        for page in images:
-            text += pytesseract.image_to_string(page)
+def extract_addresses(text):
+    # Regex voor postcode + huisnummer (bv. 1234 AB Stationsstraat 1)
+    pattern = r"(\d{4}\s?[A-Z]{2})\s+([\w\s]+\d+)"
+    matches = re.findall(pattern, text)
+    return ["{} {}".format(p[1], p[0]) for p in matches]
 
+def detect_category(text):
+    if "#woonwerk" in text.lower():
+        return "woonwerk"
+    elif "#privé" in text.lower():
+        return "prive"
     else:
-        raise ValueError("Ongeldig bestandstype voor OCR-verwerking.")
+        return "zakelijk"
 
-    save_text_to_json(text)
+def process_txt_file(filepath):
+    with open(filepath, "r", encoding="utf-8") as f:
+        content = f.read()
 
-def save_text_to_json(text):
-    output_path = os.path.abspath(OUTPUT_FILE)
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    addresses = extract_addresses(content)
+    category = detect_category(content)
 
-    with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump({"ocr_text": text}, f, indent=2, ensure_ascii=False)
+    results = []
+    km_total = 0.0
+    km_woonwerk = 0.0
+
+    for addr in addresses:
+        try:
+            km = get_distance_km(START_ADDRESS, addr)
+        except Exception as e:
+            km = 0.0
+        result = {
+            "adres": addr,
+            "afstand_km": round(km, 2),
+            "categorie": category
+        }
+        results.append(result)
+        km_total += km
+        if category == "woonwerk":
+            km_woonwerk += km
+
+    return {
+        "bestand": filepath,
+        "inhoud": content,
+        "resultaten": results,
+        "km_totaal": round(km_total, 2),
+        "km_woonwerk": round(km_woonwerk, 2)
+    }

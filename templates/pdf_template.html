@@ -1,34 +1,43 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <title>Ritregistratie PDF</title>
-  <style>
-    body { font-family: Arial; font-size: 12px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
-    th { background-color: #f0f0f0; }
-  </style>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #000; padding: 6px; text-align: left; }
+        h1 { font-size: 18px; }
+    </style>
 </head>
 <body>
-  <h1>Ritregistratie Export</h1>
-  <table>
-    <thead>
-      <tr>
-        {% for key in data[0].keys() %}
-          <th>{{ key }}</th>
-        {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in data %}
-        <tr>
-          {% for value in row.values() %}
-            <td>{{ value }}</td>
-          {% endfor %}
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+    <h1>Ritregistratie</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Tijd</th>
+                <th>Van</th>
+                <th>Naar</th>
+                <th>Omschrijving</th>
+                <th>Km</th>
+                <th>Duur</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rit in ritgegevens %}
+            <tr>
+                <td>{{ rit.datum }}</td>
+                <td>{{ rit.tijd }}</td>
+                <td>{{ rit.van }}</td>
+                <td>{{ rit.naar }}</td>
+                <td>{{ rit.omschrijving }}</td>
+                <td>{{ rit.afstand }}</td>
+                <td>{{ rit.duur }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p><strong>Totaal kilometers:</strong> {{ totaal_km }} km</p>
+    <p><strong>Woon-werk kilometers:</strong> {{ woonwerk_km }} km</p>
 </body>
 </html>

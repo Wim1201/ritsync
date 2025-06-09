@@ -1,19 +1,21 @@
+import csv
 import os
-import pandas as pd
 from datetime import datetime
-from pathlib import Path
 
-def genereer_excel(data):
-    output_folder = Path("data/output")
-    output_folder.mkdir(parents=True, exist_ok=True)
+def genereer_excel(ritten):
+    bestandsnaam = f"export/ritten_agenda_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
+    with open(bestandsnaam, mode='w', newline='', encoding='utf-8') as bestand:
+        writer = csv.writer(bestand)
+        writer.writerow(["Datum", "Tijd", "Van", "Naar", "Omschrijving", "Afstand (km)", "Duur"])
+        for rit in ritten:
+            writer.writerow([
+                rit.get("datum", ""),
+                rit.get("tijd", ""),
+                rit.get("van", ""),
+                rit.get("naar", ""),
+                rit.get("omschrijving", ""),
+                rit.get("afstand", ""),
+                rit.get("duur", "")
+            ])
+    return bestandsnaam
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    bestandspad = output_folder / f"ritten_{timestamp}.xlsx"
-
-    if isinstance(data, list) and isinstance(data[0], dict):
-        df = pd.DataFrame(data)
-    else:
-        df = pd.DataFrame([{"data": str(data)}])
-
-    df.to_excel(bestandspad, index=False)
-    return str(bestandspad)

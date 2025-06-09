@@ -1,94 +1,139 @@
-from flask import Flask, request, render_template, redirect, url_for, session, send_file
-from pathlib import Path
-from werkzeug.utils import secure_filename
+from flask import Flask, render_template, request, redirect, url_for, send_file, flash
+import os
+import csv
 from backend.services.pdf_service import genereer_pdf
 from backend.services.excel_service import genereer_excel
 
 app = Flask(__name__)
-app.secret_key = "geheimetestwaarde"
+app.secret_key = 'supersecret'
 
-UPLOAD_FOLDER = Path("uploads")
-UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
+UPLOAD_FOLDER = 'uploads'
+EXPORT_FOLDER = 'export'
+ALLOWED_EXTENSIONS = {'csv'}
 
-@app.route("/")
-def root():
-    return redirect(url_for("home"))
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['EXPORT_FOLDER'] = EXPORT_FOLDER
 
-@app.route("/home")
-def home():
-    return render_template("start.html")
 
-@app.route("/index")
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+# 📄 Home
+@app.route('/')
+@app.route('/index')
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
 
-@app.route("/verwerk", methods=["POST"])
+
+# 📤 Upload CSV
+@app.route('/verwerk', methods=['POST'])
 def verwerk():
-    thuisadres = request.form.get("thuisadres")
-    kantooradres = request.form.get("kantooradres")
+    if 'bestand' not in request.files:
+        flash("Geen bestand geselecteerd.")
+        return redirect(request.url)
 
-    agenda_bestanden = request.files.getlist("agenda_files")
-    ics_bestanden = request.files.getlist("ics_files")
+    bestand = request.files['bestand']
+    if bestand.filename == '':
+        flash("Geen bestandsnaam opgegeven.")
+        return redirect(request.url)
 
-    agenda_bestanden = [f for f in agenda_bestanden if f and f.filename]
-    ics_bestanden = [f for f in ics_bestanden if f and f.filename]
+    if bestand and allowed_file(bestand.filename):
+        bestand_path = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_upload.csv')
+        bestand.save(bestand_path)
+        flash("➡️ Bestand ontvangen en opgeslagen")
+        return redirect(url_for('resultaat'))
 
-    for bestand in agenda_bestanden + ics_bestanden:
-        bestandsnaam = secure_filename(bestand.filename)
-        bestand.save(UPLOAD_FOLDER / bestandsnaam)
+    flash("⚠️ Ongeldig bestandstype. Alleen .csv toegestaan.")
+    return redirect(request.url)
 
-    # Simulatie/mockdata voor demo
-    ritgegevens = [
-        {
-            "datum": "2025-06-06",
-            "tijd": "09:00",
-            "vertrek": thuisadres,
-            "bestemming": kantooradres,
-            "kilometers": 27.4,
-            "project": "Ritsync MVP"
-        },
-        {
-            "datum": "2025-06-07",
-            "tijd": "14:30",
-            "vertrek": kantooradres,
-            "bestemming": thuisadres,
-            "kilometers": 27.4,
-            "project": "Ritsync MVP"
-        }
-    ]
 
-    session["ritgegevens"] = ritgegevens
-    session["totaal_km"] = sum(r["kilometers"] for r in ritgegevens)
-    session["woonwerk_km"] = 12.0  # Placeholder
-
-    return redirect(url_for("resultaat"))
-
-@app.route("/resultaat")
+# 📊 Resultaat tonen
+@app.route('/resultaat')
 def resultaat():
-    ritgegevens = session.get("ritgegevens", [])
-    totaal_km = session.get("totaal_km", 0)
-    woonwerk_km = session.get("woonwerk_km", 0)
-    return render_template("resultaat.html", ritten=ritgegevens, totaal_km=totaal_km, woonwerk_km=woonwerk_km)
+    csv_path = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_upload.csv')
+    ritten = []
+    totaal_km = 0.0
+    woonwerk_km = 0.0
 
-@app.route("/export/pdf")
-def download_pdf():
-    data = session.get("ritgegevens", [])
-    if not data:
-        return "<h2>Geen ritgegevens gevonden om te exporteren.</h2>", 400
+    if os.path.exists(csv_path):
+        with open(csv_path, newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for rij in reader:
+                locatie = rij.get('Locatie', '').strip()
+                datum = rij.get('Datum', '').strip()
+                tijd = rij.get('Tijd', '').strip()
+                km = float(rij.get('Kilometers', 0) or 0)
+                omschrijving = rij.get('Omschrijving', '').strip()
 
-    temp_pdf_path = Path("data/output/ritregistratie.pdf")
-    genereer_pdf(data, temp_pdf_path)
-    return send_file(temp_pdf_path, as_attachment=True)
+                if not locatie or not datum or not tijd:
+                    flash(f"⚠️ Onvolledige regel overgeslagen: {rij}")
+                    continue
 
-@app.route("/export/excel")
-def download_excel():
-    data = session.get("ritgegevens", [])
-    if not data:
-        return "<h2>Geen ritgegevens gevonden om te exporteren.</h2>", 400
+                ritten.append({
+                    'Datum': datum,
+                    'Tijd': tijd,
+                    'Locatie': locatie,
+                    'Omschrijving': omschrijving,
+                    'Kilometers': km
+                })
 
-    pad = genereer_excel(data)
-    return send_file(pad, as_attachment=True)
+                totaal_km += km
+                # 💡 woonwerk km logica kun je hier uitbreiden
+
+    flash(f"✅ Geparsed: {len(ritten)} items")
+    return render_template('resultaat.html', ritten=ritten, totaal_km=totaal_km, woonwerk_km=woonwerk_km)
 
 
-if __name__ == "__main__":
+# 🧾 Exporteer naar PDF
+@app.route('/export/pdf')
+def exporteer_pdf():
+    csv_path = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_upload.csv')
+    ritten, totaal_km, woonwerk_km = laad_ritten(csv_path)
+    bestandsnaam = genereer_pdf(ritten, totaal_km, woonwerk_km)
+    return send_file(bestandsnaam, as_attachment=True)
+
+
+# 📊 Exporteer naar Excel
+@app.route('/export/excel')
+def exporteer_excel():
+    csv_path = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_upload.csv')
+    ritten, totaal_km, woonwerk_km = laad_ritten(csv_path)
+    bestandsnaam = genereer_excel(ritten, totaal_km, woonwerk_km)
+    return send_file(bestandsnaam, as_attachment=True)
+
+
+# 🔁 Hergebruikbare CSV parser
+def laad_ritten(pad):
+    ritten = []
+    totaal_km = 0.0
+    woonwerk_km = 0.0
+
+    if os.path.exists(pad):
+        with open(pad, newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for rij in reader:
+                locatie = rij.get('Locatie', '').strip()
+                datum = rij.get('Datum', '').strip()
+                tijd = rij.get('Tijd', '').strip()
+                km = float(rij.get('Kilometers', 0) or 0)
+                omschrijving = rij.get('Omschrijving', '').strip()
+
+                if not locatie or not datum or not tijd:
+                    continue
+
+                ritten.append({
+                    'Datum': datum,
+                    'Tijd': tijd,
+                    'Locatie': locatie,
+                    'Omschrijving': omschrijving,
+                    'Kilometers': km
+                })
+
+                totaal_km += km
+
+    return ritten, totaal_km, woonwerk_km
+
+
+if __name__ == '__main__':
     app.run(debug=True)

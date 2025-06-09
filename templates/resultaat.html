@@ -1,57 +1,38 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <title>Ritregistratie Overzicht</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
-    h1, h2 { color: #0077b6; border-bottom: 2px solid #0077b6; padding-bottom: 5px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #aaa; padding: 8px; text-align: left; }
-    th { background-color: #e0f0ff; }
-    .summary { margin-top: 30px; font-weight: bold; }
-    .btn { display: inline-block; margin-top: 20px; padding: 10px 20px; color: white; background-color: #0077b6; border: none; border-radius: 5px; text-decoration: none; }
-    .btn:hover { background-color: #005f8d; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Rittenoverzicht</title>
 </head>
 <body>
-  <h1>Ritregistratie Resultaat</h1>
-  {% if ritten %}
-    <table>
-      <thead>
-        <tr>
-          <th>Datum</th>
-          <th>Tijd</th>
-          <th>Vertrek</th>
-          <th>Bestemming</th>
-          <th>Kilometers</th>
-          <th>Project</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for rit in ritten %}
-          <tr>
-            <td>{{ rit.datum }}</td>
-            <td>{{ rit.tijd }}</td>
-            <td>{{ rit.vertrek }}</td>
-            <td>{{ rit.bestemming }}</td>
-            <td>{{ rit.kilometers }}</td>
-            <td>{{ rit.project or "-" }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
+    <h1>📍 Rittenoverzicht</h1>
+    <table border="1" cellpadding="5">
+        <thead>
+            <tr>
+                <th>Datum</th>
+                <th>Tijd</th>
+                <th>Locatie</th>
+                <th>Omschrijving</th>
+                <th>Kilometers</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rit in ritten %}
+            <tr>
+                <td>{{ rit['datum'] }}</td>
+                <td>{{ rit['tijd'] }}</td>
+                <td>{{ rit['locatie'] }}</td>
+                <td>{{ rit.get('omschrijving', '') }}</td>
+                <td>{{ rit['afstand'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
-    <div class="summary">
-      📍 Totaal zakelijk gereden: {{ totaal_km }} km<br>
-      🏠 Inclusief woon-werkverkeer: {{ woonwerk_km }} km
-    </div>
-    <div>
-      <a class="btn" href="{{ url_for('download_pdf') }}">Download als PDF</a>
-      <a class="btn" href="{{ url_for('download_excel') }}">Download als Excel</a>
-      <a class="btn" href="#" onclick="window.print()">Print</a>
-    </div>
-  {% else %}
-    <p>Geen ritgegevens beschikbaar.</p>
-  {% endif %}
+
+    <p>📏 Totaal kilometers: <strong>{{ totaal_km }} km</strong></p>
+    <p>🏠 Woon-werk: <strong>{{ woonwerk_km }} km</strong></p>
+
+    <a href="{{ url_for('exporteer_pdf') }}">📄 Download PDF</a> |
+    <a href="{{ url_for('exporteer_excel') }}">📊 Download Excel</a>
 </body>
 </html>

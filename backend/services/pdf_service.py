@@ -1,26 +1,16 @@
-# backend/services/pdf_service.py
+from jinja2 import Environment, FileSystemLoader
 import pdfkit
 import os
-from jinja2 import Environment, FileSystemLoader
+from datetime import datetime
 
-
-def genereer_pdf(data, output_path):
-    # Zet het pad naar de templates-map
-    template_dir = os.path.join(os.path.dirname(__file__), '../templates')
-    from pathlib import Path
-    from jinja2 import Environment, FileSystemLoader
-
-    templates_dir = Path(__file__).resolve().parent.parent.parent / "templates"
-    env = Environment(loader=FileSystemLoader(str(templates_dir)))
-
+def genereer_pdf(ritten, totaal_km, woonwerk_km):
+    env = Environment(loader=FileSystemLoader("templates"))
     template = env.get_template("pdf_template.html")
 
-    # Render de HTML met de opgegeven data
-    html_content = template.render(data=data)
+    html = template.render(ritgegevens=ritten, totaal_km=totaal_km, woonwerk_km=woonwerk_km)
+    bestandsnaam = f"export/ritregistratie_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
 
-    # Zet de config voor wkhtmltopdf
-    config = pdfkit.configuration(wkhtmltopdf=os.getenv("WKHTMLTOPDF_PATH", "C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe"))
+    config = pdfkit.configuration(wkhtmltopdf=os.getenv("WKHTMLTOPDF_PATH", "bin/wkhtmltopdf.exe"))
+    pdfkit.from_string(html, bestandsnaam, configuration=config)
 
-    # Genereer de PDF
-    pdfkit.from_string(html_content, output_path, configuration=config)
-    return output_path
+    return bestandsnaam

@@ -1,23 +1,14 @@
-<form method="POST" action="/verwerk" enctype="multipart/form-data">
-  <!-- Adresvelden -->
-  <label for="thuisadres">Thuisadres:</label>
-  <input type="text" id="thuisadres" name="thuisadres" required>
-
-  <label for="kantooradres">Kantooradres:</label>
-  <input type="text" id="kantooradres" name="kantooradres" required>
-
-  <hr>
-
-  <!-- 📂 Agenda upload (JPG, PNG, PDF) -->
-  <label for="agenda_upload">Upload agenda of werkbon (JPG, PNG, PDF):</label>
-  <input type="file" id="agenda_upload" name="agenda_files" accept=".jpg,.jpeg,.png,.pdf" multiple>
-
-  <!-- 📂 Digitale agenda (ICS, CSV) -->
-  <label for="ics_upload">Upload digitale agenda (ICS, CSV):</label>
-  <input type="file" id="ics_upload" name="ics_files" accept=".ics,.csv" multiple>
-
-  <hr>
-
-  <button type="submit">Start verwerking</button>
-</form>
-
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>CSV Uploaden</title>
+</head>
+<body>
+    <h1>📤 Rittenbestand Uploaden</h1>
+    <form action="{{ url_for('verwerk') }}" method="POST" enctype="multipart/form-data">
+        <input type="file" name="bestand" accept=".csv" required>
+        <button type="submit">Upload CSV</button>
+    </form>
+</body>
+</html>
